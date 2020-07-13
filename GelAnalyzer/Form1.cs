@@ -357,23 +357,23 @@ namespace GelAnalyzer
                     #endregion
 
                     #region перекраска одного геля в диблочный
-                    List<double[]> gelcolored = new List<double[]>();
-                    List<double[]> beadstocolor = new List<double[]>();//all recolored beads
+                    List<double[]> gelcolored = new List<double[]>(); //temporary list
+                    List<double[]> beadstocolor = new List<double[]>();//all beads to recolor
                     for (int j = 0; j < molAmount; j++)
                     {
                         List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - crossSections
 
                         beadstocolor.AddRange(crossSections);
-                        List<double[]> temp = new List<double[]>(); //beads around crossSections which we want recolor
+                       /* List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
                         foreach (var c in file)
                         {
                             if (crossSections.Contains(c))
                             {
-                                temp.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.5));
+                                beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.5));
                             }
                         }
-                        beadstocolor.AddRange(temp);
-                        
+                        beadstocolor.AddRange(beadsAround);
+                        */
                     }
                     gelcolored.AddRange(file);
                     foreach (var c in gelcolored) //recoloring beads
@@ -385,7 +385,7 @@ namespace GelAnalyzer
                         }
                     colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
                         , 0, 0, 0, gelcolored);
-                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblock" + (i + 1).ToString() + ".lammpstrj",
+                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
                                              1, sizes, 3, colormol);
                     #endregion
 

@@ -256,15 +256,22 @@ namespace GelAnalyzer
         public static List<double[]> GetCrossSections(List<double[]> list)
         {
             List<double[]> crossSections = new List<double[]>();
-            List<double[]> temp = new List<double[]>();
+            int a = 0; //counter for beads which are in concrete distance (0 < DISTANCE < 0.5) from bead in 1st foreach loop  
+                                                                                                          //0-value prevents from counting itself
             foreach (var c in list)
             {
-
-                temp = list.FindAll(x => ((Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]) < 0.5)));
-               if (temp.Count == 3)
+                
+                foreach (var d in list)
+                {
+                    if ((Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) < 0.31) & (Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) > 0)){
+                        a++;
+                    }
+                }
+                if (a == 4)
                 {
                     crossSections.Add(c);
                 }
+                a = 0;
             }
             
             return crossSections;
