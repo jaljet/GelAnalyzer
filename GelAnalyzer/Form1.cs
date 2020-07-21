@@ -362,18 +362,20 @@ namespace GelAnalyzer
                     for (int j = 0; j < molAmount; j++)
                     {
                         List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - crossSections
-
-                        beadstocolor.AddRange(crossSections);
-                       /* List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
-                        foreach (var c in file)
+                        List <double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
+                        beadstocolor.AddRange(SortBCrossSections);
+                        //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
+                        List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections);
+                        beadstocolor.AddRange(SortBNeighbours);
+                        /*foreach (var c in file)
                         {
                             if (crossSections.Contains(c))
                             {
-                                beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.5));
+                                beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
                             }
                         }
-                        beadstocolor.AddRange(beadsAround);
-                        */
+                        beadstocolor.AddRange(beadsAround);*/
+                        
                     }
                     gelcolored.AddRange(file);
                     foreach (var c in gelcolored) //recoloring beads
