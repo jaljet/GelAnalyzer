@@ -283,17 +283,56 @@ namespace GelAnalyzer
 
 
         #region color in type-2 some of cross-sections to get star-diblock copolymer
-        public static List<double[]> GetSortBCrossSections(List<double[]> list)
+        public static List<double[]> GetSortBCrossSections(List<double[]> allcrossections)
         {
             List<double[]> SortBCrossSections = new List<double[]>();
 
             int a = 0; //counter for beads from center to center for center in 1st foreach loop  
+            var distance1 = 2.94;
+            var distance2 = 2.95;
 
+            int currcounter;
+            int counter=0;
+            
+
+            var currCrosslinker = allcrossections[0];
             List<double[]> nearcenters = new List<double[]>(); //centers which are nearby to randomly coloured center
-             foreach (var c in list)
+            SortBCrossSections.Add(currCrosslinker);
+       
+           do
+            {
+                currcounter = counter;
+
+                foreach (var d in allcrossections)
+                {
+
+                    if ((Analyzer.GetDistance(currCrosslinker[0], d[0], currCrosslinker[1], d[1], currCrosslinker[2], d[2]) < distance2)
+                        & (Analyzer.GetDistance(currCrosslinker[0], d[0], currCrosslinker[1], d[1], currCrosslinker[2], d[2]) > distance1))
+                    {
+
+                        if (!SortBCrossSections.Contains(d))
+                        {
+                            d[3] = 2;
+
+                            SortBCrossSections.Add(d);
+                            
+                            counter++;
+                        }
+                    }
+                }
+                distance1 *= 1.9;
+                distance2 *= 2;
+
+
+
+
+            } while (currcounter < counter) ;
+
+
+             /*foreach (var c in allcrossections)
             {
                 
-                foreach (var d in list)
+                foreach (var d in allcrossections)
                 {
                     if ((Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) < 1.803) & ((c[3]==2) | d[3]==2))
                     {
@@ -312,7 +351,7 @@ namespace GelAnalyzer
                     SortBCrossSections.Add(c);
                 }
                 a = 0;
-            }
+            }*/
 
             return SortBCrossSections;
         }
@@ -328,12 +367,13 @@ namespace GelAnalyzer
 
                 foreach (var d in allbeads)
                 {
-                   
-                    if ((Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) < 1.1) & (Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) > 0.87))
+
+                    if ((Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) < 1.1) & (Analyzer.GetDistance(c[0], d[0], c[1], d[1], c[2], d[2]) > 0))
                     {
                         d[3] = 2;
                         SortBNeighbours.Add(d);
                     }
+                    
                 }                      
             }
 
@@ -342,3 +382,95 @@ namespace GelAnalyzer
         #endregion
     }
 }
+
+
+/* public static void AddNonLinMol_Recurcion(int molIndex, string direction, List<double[]> borders, Random rnd, 
+List<int> placedBeads, MolData currBead, List<MolData> mol, List<MolData> system)
+{
+currBead.XCoord = system[system.Count - 1].XCoord;
+currBead.YCoord = system[system.Count - 1].YCoord;
+currBead.ZCoord = system[system.Count - 1].ZCoord;
+
+placedBeads.Add(currBead.Index);
+
+if (currBead.Bonds.Count == 1 && placedBeads.Contains(currBead.Bonds[0]))
+{
+return;
+}
+else
+{
+foreach (var c in currBead.Bonds)
+{
+if (!placedBeads.Contains(c))
+{
+double xCoord = rnd.Next(-600, 600) / 1000.0 + currBead.XCoord;
+double yCoord = rnd.Next(-600, 600) / 1000.0 + currBead.YCoord;
+double zCoord = rnd.Next(-600, 600) / 1000.0 + currBead.ZCoord;
+
+if (direction == "X")
+{
+xCoord = rnd.Next(0, 500) / 1000.0 + currBead.XCoord;
+}
+if (direction == "Y")
+{
+yCoord = rnd.Next(0, 500) / 1000.0 + currBead.YCoord;
+}
+if (direction == "Z")
+{
+zCoord = rnd.Next(0, 500) / 1000.0 + currBead.ZCoord;
+}
+
+if (borders.Count != 0)
+{
+if (borders[0][0] != borders[0][1])
+{
+if (xCoord < borders[0][0])
+{
+xCoord = borders[0][0];
+}
+
+if (xCoord > borders[0][1])
+{
+xCoord = borders[0][1];
+}
+}
+
+if (borders[1][0] != borders[1][1])
+{
+if (yCoord < borders[1][0])
+{
+yCoord = borders[1][0];
+}
+
+if (yCoord > borders[1][1])
+{
+yCoord = borders[1][1];
+}
+}
+
+if (borders[2][0] != borders[2][1])
+{
+if (zCoord < borders[2][0])
+{
+zCoord = borders[2][0];
+}
+
+if (zCoord > borders[2][1])
+{
+zCoord = borders[2][1];
+}
+}
+}
+
+system.Add(new MolData(mol.First(x => x.Index == c).AtomType, system.Count + 1, molIndex, xCoord, yCoord, zCoord));
+
+
+placedBeads.Add(c);
+
+currBead = mol.First(x => x.Index == placedBeads[placedBeads.Count - 1]);
+
+AddNonLinMol_Recurcion(molIndex, direction, rnd, placedBeads, currBead, mol, system);
+}
+}
+}
+*/
