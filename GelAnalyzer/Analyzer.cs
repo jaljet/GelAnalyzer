@@ -245,7 +245,7 @@ namespace GelAnalyzer
 
         #endregion
 
-        public static double GetDistance(double x1, double x2, double y1, double y2, double z1, double z2)
+        public static double GetDistance(double x1, double x2, double y1, double y2, double z1, double z2) //calculate distance between 2 beads
         {
             double distance = Math.Sqrt(Math.Pow((x2 - x1), 2) + Math.Pow((y2 - y1), 2) + Math.Pow((z2 - z1), 2));
 
@@ -257,7 +257,7 @@ namespace GelAnalyzer
         {
             List<double[]> crossSections = new List<double[]>();
             int a = 0; //counter for beads which are in concrete distance (0 < DISTANCE < 0.5) from bead in 1st foreach loop  
-                       //0-value prevents from counting itself
+                       //0-value prevents from counting itself; distance value is based on previously calculated distance between 2 beads in 'real' model gel
             foreach (var c in list)
             {
 
@@ -360,7 +360,7 @@ namespace GelAnalyzer
         #region color in type-2 some of neighbors of type-2 cross-sections
         public static List<double[]> GetSortBNeighbours(List<double[]> allbeads, List<double[]> sortBCrossSections)
         {
-            List<double[]> SortBNeighbours = new List<double[]>(); //beads around type-2 crosssections which we make type-2
+            List<double[]> SortBNeighbours = new List<double[]>(); //beads around type-2 crosssections which we want to make type-2
             
             foreach (var c in sortBCrossSections)
             {

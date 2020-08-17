@@ -257,8 +257,13 @@ namespace GelAnalyzer
             int molCount = 0; 
             int snapCount = 1;
 
-            double[] XYfull = new double[files.Length]; //массив для всех Rxy
-            double[] Zfull = new double[files.Length]; //массив для всех Rz
+            double[] XYfull = new double[molAmount]; //массив для всех Rxy
+            double[] Zfull = new double[molAmount]; //массив для всех Rz
+
+
+            double[] XY = new double[molAmount];
+            double[] Z = new double[molAmount];
+
 
             double[] poldens = new double[files.Length]; //потности полимера, полная, объёмная полимера
             double[] fulldens = new double[files.Length];
@@ -275,8 +280,9 @@ namespace GelAnalyzer
                 {
                 
                     var file = FileWorker.LoadLammpstrjLines(files[i], out snapCount, out  sizes);
-                    double[] XY = new double[molAmount];
-                    double[] Z = new double[molAmount];
+                    //double[] XY = new double[molAmount];
+                    //double[] Z = new double[molAmount];
+
                     List<double[]> centermass = new List<double[]>();
                     int centergelAmount=0; //счётчик числа гелей, которые не у стенки
                     List<double[]> centers = new List<double[]>(); //центры масс гелей не у стенки
@@ -289,9 +295,9 @@ namespace GelAnalyzer
                     {
                         var mol = file.Skip(j * numberN).Take(numberN).ToList();
 
-                        var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика ?
+                        var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
                         
-                        //Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+                        Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
                         XY[j] = StructFormer.GetHydroRadius2D(mol);
                         Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
@@ -305,7 +311,7 @@ namespace GelAnalyzer
                         var distX = Math.Abs(mol.Max(x => x[0]) - mol.Min(x => x[0]));
                         var distY = Math.Abs(mol.Max(x => x[1]) - mol.Min(x => x[1]));
 
-                        if (distX < sizes[0]*0.95 && distY < sizes[1] * 0.95)
+                        if (distX < sizes[0] * 0.95 && distY < sizes[1] * 0.95)
                         {
                             centers.Add(StructFormer.GetCenterMass(mol));
                             cXY.Add(XY[j]);
@@ -356,18 +362,23 @@ namespace GelAnalyzer
                     Zfull[i] = Math.Round(radZ,2);
                     #endregion
 
+
+
                     #region перекраска одного геля в диблочный
-                    List<double[]> gelcolored = new List<double[]>(); //temporary list
-                    List<double[]> beadstocolor = new List<double[]>();//all beads to recolor
+
+                    List<double[]> gelcolored = new List<double[]>(); //just a temporary list
+                    List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
                     for (int j = 0; j < molAmount; j++)
                     {
-                        List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - crossSections
-                        List <double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
+                        List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
+                        List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
                         beadstocolor.AddRange(SortBCrossSections);
                         //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
-                        List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections);
+                        List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
+                                                                                                                        //centers to type-2 
+
                         beadstocolor.AddRange(SortBNeighbours);
-                        /*foreach (var c in file)
+                        /* foreach (var c in file)
                         {
                             if (crossSections.Contains(c))
                             {
@@ -375,35 +386,37 @@ namespace GelAnalyzer
                             }
                         }
                         beadstocolor.AddRange(beadsAround);*/
-                        
+
                     }
                     gelcolored.AddRange(file);
                     foreach (var c in gelcolored) //recoloring beads
+                    {
+                        if (beadstocolor.Contains(c))
                         {
-                            if (beadstocolor.Contains(c))
-                            {
-                                c[3] = 2;
-                            }
+                            c[3] = 2;
                         }
+                    }
                     colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
                         , 0, 0, 0, gelcolored);
                     FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
                                              1, sizes, 3, colormol);
                     #endregion
 
+
+
                     #region отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
-                    List<double[]> cylinders = new List<double[]>(); 
+                    List<double[]> cylinders = new List<double[]>();
                     for (int j = 0; j < centers.Count; j++)
                     {
 
-                        cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0]- centers[j][0]),2)+ Math.Pow(Math.Abs(x[1] - centers[j][1]), 2)) 
-                                                            <= 0.33*cXY[j]).ToList());
+                        cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[j][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[j][1]), 2))
+                                                            <= 0.33 * cXY[j]).ToList());
                     }
 
                     cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
                         , 0, 0, 0, cylinders);
 
-                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i+1).ToString() +".lammpstrj", 
+                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
                                              1, sizes, 3, cylmol);
 
                     #endregion
@@ -514,9 +527,10 @@ namespace GelAnalyzer
 
             for (int k = 0; k < XYfull.Length; k++)
             {
-                sum += Math.Pow((XYfull[k] - meantradXY), 2);
+                sum += Math.Pow((XY[k] - meantradXY), 2);
             }
-            sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
+            //sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
+            sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
             res[2] = Math.Round(sqradXY, 2);
 
             for (int k = 0; k < Zfull.Length; k++)
