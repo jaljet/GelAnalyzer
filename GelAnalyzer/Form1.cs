@@ -375,7 +375,7 @@ namespace GelAnalyzer
                         beadstocolor.AddRange(SortBCrossSections);
                         //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
                         List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
-                                                                                                                        //centers to type-2 
+                                                                                                                //centers to type-2 
 
                         beadstocolor.AddRange(SortBNeighbours);
                         /* foreach (var c in file)
@@ -511,21 +511,21 @@ namespace GelAnalyzer
             #region средние радиусы с погрешностями и плотности в слое по ансамблю
             double meantradXY, meantradZ, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
             double sum = 0;           
-            for (int k = 0; k < XYfull.Length; k++)
+            for (int k = 0; k < XY.Length; k++)
             {
-                sum += XYfull[k];
+                sum += XY[k];
             }
-            meantradXY = sum / files.Length; sum = 0;
+            meantradXY = sum / molAmount; sum = 0;
             res[0] = Math.Round(meantradXY, 2);
 
-            for (int k = 0; k < Zfull.Length; k++)
+            for (int k = 0; k < Z.Length; k++)
             {
-                sum += Zfull[k];
+                sum += Z[k];
             }
-            meantradZ = sum / files.Length; sum = 0;
+            meantradZ = sum / molAmount; sum = 0;
             res[1] = Math.Round(meantradZ, 2);
 
-            for (int k = 0; k < XYfull.Length; k++)
+            for (int k = 0; k < XY.Length; k++)
             {
                 sum += Math.Pow((XY[k] - meantradXY), 2);
             }
@@ -533,11 +533,11 @@ namespace GelAnalyzer
             sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
             res[2] = Math.Round(sqradXY, 2);
 
-            for (int k = 0; k < Zfull.Length; k++)
+            for (int k = 0; k < Z.Length; k++)
             {
-                sum += Math.Pow((Zfull[k] - meantradZ), 2);
+                sum += Math.Pow((Z[k] - meantradZ), 2);
             }
-            sqradZ = Math.Sqrt(sum / (Zfull.Length - 1)); sum = 0;
+            sqradZ = Math.Sqrt(sum / (Z.Length - 1)); sum = 0;
             res[3] = Math.Round(sqradZ, 2);
 
             for (int k = 0; k < poldens.Length; k++)
@@ -560,7 +560,7 @@ namespace GelAnalyzer
             }
             mfulldens = Math.Sqrt(sum / (volpoldens.Length)); sum = 0;
             res[6] = Math.Round(mfulldens, 2);
-#endregion
+            #endregion
 
             e.Result = new object[] { molCount, res, sizes};
         }
