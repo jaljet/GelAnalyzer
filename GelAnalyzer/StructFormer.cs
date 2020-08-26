@@ -50,6 +50,16 @@ namespace GelAnalyzer
 
         }
 
+        public static int FuckWithCode(int xSize, int ySize,
+                                    double[] diameters)
+        {
+            int xAmount = (int)(xSize / diameters[0]);
+            int yAmount = (int)(ySize / diameters[1]);
+
+            return (int)(xAmount * yAmount);
+
+        }
+
         /// <summary>
         /// Вычисление гидродинамического радиуса
         /// </summary>

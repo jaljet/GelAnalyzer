@@ -584,6 +584,21 @@ namespace GelAnalyzer
             //FileWorker.SaveLammpstrj(false, tbPath.Text + "//res.lammpstrj", 1,
                                     //(double[])args[3], 3, (List<MolData>)args[2]);
         }
+
+        private void bgWorkerRecolor_DoWork(object sender, DoWorkEventArgs e)
+        {
+
+        }
+
+        private void bgWorkerRecolor_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+
+        }
+
+        private void bgWorkerRecolor_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+
+        }
     }
 
 
