@@ -232,6 +232,18 @@ namespace GelAnalyzer
             return centerMass;
         }
 
+
+        public static double[] GetCenterMass(List<MolData> data)
+        {
+            double[] centerMass = new double[]
+            {GetAxCenterMass(data, 0),
+            GetAxCenterMass(data, 1),
+            GetAxCenterMass(data, 2)
+            };
+
+            return centerMass;
+        }
+
         public static double GetAxCenterMass(List<double[]> data, int axNum)
         {
             double ax = 0;
@@ -243,6 +255,32 @@ namespace GelAnalyzer
             foreach (var c in polymer)
             {
                 ax += c[axNum];
+            }
+
+            return ax / polymer.Count;
+        }
+        public static double GetAxCenterMass(List<MolData> data, int axNum)
+        {
+            double ax = 0;
+
+            var polymer = data.Where(x => x.AtomType == 1.00 ||
+                                          x.AtomType == 1.01 ||
+                                          x.AtomType == 1.04).ToList();
+
+            foreach (var c in polymer)
+            {
+                if (axNum == 0)
+                {
+                    ax += c.XCoord;
+                }
+                else if (axNum == 1)
+                {
+                    ax += c.YCoord;
+                }
+                else
+                {
+                    ax += c.ZCoord;
+                }
             }
 
             return ax / polymer.Count;

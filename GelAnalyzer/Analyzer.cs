@@ -355,6 +355,124 @@ namespace GelAnalyzer
 
             return SortBCrossSections;
         }
+
+
+
+        public static void RecolorALL(List<MolData> mGel, int subchainLength, int colorLength)
+        {
+            var crossLinkers = GetCrossLinkers(mGel);
+
+            var cMass = StructFormer.GetCenterMass(mGel);
+
+            var minDistance = crossLinkers.Min(x => StructFormer.GetDistance(x.XCoord, x.YCoord, x.ZCoord,
+                                                                             cMass[0], cMass[1], cMass[2]));
+            var basecLinker = crossLinkers.Where(x => StructFormer.GetDistance(x.XCoord, x.YCoord, x.ZCoord,
+                                                                             cMass[0], cMass[1], cMass[2]) == minDistance).ToList()[0];
+            basecLinker.AtomType = 1.01;
+            basecLinker.MolIndex = 2;
+
+            doNetworkWalk(basecLinker, colorLength, subchainLength, 0, 0, false, mGel);
+
+        }
+
+        private static void doNetworkWalk(MolData currBead, int colorLength, int subchainLength, 
+                                          int colorCounter, int sChainCounter, bool chainRecolored,
+                                          List<MolData> mGel)
+        {
+            // проверка является ли точка узлом (sChainCounter был введен для случая узлов на границе геля с 2 связями)
+            if (currBead.Bonds.Count > 2 || sChainCounter == 0)
+            {     
+
+                foreach (var c in currBead.Bonds)
+                {
+                    mGel[c - 1].AtomType = currBead.AtomType;
+                    mGel[c - 1].MolIndex = 2;
+
+                if (currBead.AtomType == 1.01)
+                {
+                    colorCounter = 1;
+                }
+                   
+                    doNetworkWalk(mGel[c - 1], colorLength, subchainLength, colorCounter, 1, chainRecolored, mGel);
+                }     
+            }
+            // обходы вдоль субцепей
+            else
+            {
+                foreach (var c in currBead.Bonds)
+                {
+                    // MolIndex = 2 means that this bead has been visited
+
+                    var nextBead = mGel[c - 1];
+                    if (nextBead.MolIndex != 2)
+                    {
+                        nextBead.MolIndex = 2;
+                        sChainCounter++;
+
+                        if (currBead.AtomType == 1.01)
+                        {
+                            if (colorCounter < colorLength && !chainRecolored)
+                            {
+                                nextBead.AtomType = 1.01;
+                                colorCounter++;
+                            }
+                            else
+                            {
+                                chainRecolored = true;
+                                colorCounter = 0;
+
+                                if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
+                                {
+                                    sChainCounter = 0;
+                                    chainRecolored = false;
+                                    nextBead.AtomType = 1.01;
+                                }
+
+                            }
+                        }
+                        else
+                        {
+                            if (chainRecolored)
+                            {
+                                if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
+                                {
+                                    sChainCounter = 0;
+                                    chainRecolored = false;
+                                }
+                            }
+                            else
+                            {
+                                if (sChainCounter > subchainLength - colorLength)
+                                {
+                                    colorCounter++;
+                                    nextBead.AtomType = 1.01;
+                                }
+                            }
+                        }
+                        doNetworkWalk(nextBead, colorLength, subchainLength, colorCounter, sChainCounter, chainRecolored, mGel);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        private static List<MolData> GetCrossLinkers(List<MolData> mgel)
+        {
+            var cLinkers = new List<MolData>();
+
+            foreach(var c in mgel)
+            {
+                if (c.Bonds.Count > 2)
+                {
+                    cLinkers.Add(c);
+                }
+            }
+
+            return cLinkers;
+        }
         #endregion
 
         #region color in type-2 some of neighbors of type-2 cross-sections

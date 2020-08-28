@@ -81,10 +81,13 @@
             this.tpageRecolor = new System.Windows.Forms.TabPage();
             this.btnChooseMgel = new System.Windows.Forms.Button();
             this.tbMicrogelPath = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.tbRecolorLength = new System.Windows.Forms.TextBox();
             this.label14 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.label15 = new System.Windows.Forms.Label();
+            this.tbSubchainLength = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -525,15 +528,17 @@
             // tpageRecolor
             // 
             this.tpageRecolor.BackColor = System.Drawing.SystemColors.Control;
+            this.tpageRecolor.Controls.Add(this.label15);
+            this.tpageRecolor.Controls.Add(this.tbSubchainLength);
             this.tpageRecolor.Controls.Add(this.btnChooseMgel);
             this.tpageRecolor.Controls.Add(this.tbMicrogelPath);
-            this.tpageRecolor.Controls.Add(this.textBox2);
+            this.tpageRecolor.Controls.Add(this.tbRecolorLength);
             this.tpageRecolor.Controls.Add(this.label14);
             this.tpageRecolor.Controls.Add(this.button4);
             this.tpageRecolor.Location = new System.Drawing.Point(4, 22);
             this.tpageRecolor.Name = "tpageRecolor";
             this.tpageRecolor.Padding = new System.Windows.Forms.Padding(3);
-            this.tpageRecolor.Size = new System.Drawing.Size(960, 374);
+            this.tpageRecolor.Size = new System.Drawing.Size(960, 337);
             this.tpageRecolor.TabIndex = 1;
             this.tpageRecolor.Text = "Перекраска";
             // 
@@ -545,6 +550,7 @@
             this.btnChooseMgel.TabIndex = 24;
             this.btnChooseMgel.Text = "Выберите микрогель";
             this.btnChooseMgel.UseVisualStyleBackColor = true;
+            this.btnChooseMgel.Click += new System.EventHandler(this.btnChooseMgel_Click);
             // 
             // tbMicrogelPath
             // 
@@ -553,13 +559,13 @@
             this.tbMicrogelPath.Size = new System.Drawing.Size(233, 20);
             this.tbMicrogelPath.TabIndex = 25;
             // 
-            // textBox2
+            // tbRecolorLength
             // 
-            this.textBox2.Location = new System.Drawing.Point(112, 49);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(100, 20);
-            this.textBox2.TabIndex = 28;
-            this.textBox2.Text = "4";
+            this.tbRecolorLength.Location = new System.Drawing.Point(136, 49);
+            this.tbRecolorLength.Name = "tbRecolorLength";
+            this.tbRecolorLength.Size = new System.Drawing.Size(100, 20);
+            this.tbRecolorLength.TabIndex = 28;
+            this.tbRecolorLength.Text = "4";
             // 
             // label14
             // 
@@ -576,14 +582,37 @@
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(153, 23);
             this.button4.TabIndex = 26;
-            this.button4.Text = "Пуск (группа молекул)";
+            this.button4.Text = "Пуск";
             this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // bgWorkerRecolor
             // 
+            this.bgWorkerRecolor.WorkerReportsProgress = true;
             this.bgWorkerRecolor.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRecolor_DoWork);
             this.bgWorkerRecolor.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.bgWorkerRecolor_ProgressChanged);
             this.bgWorkerRecolor.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bgWorkerRecolor_RunWorkerCompleted);
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.FileName = "openFileDialog";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(257, 52);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(87, 13);
+            this.label15.TabIndex = 33;
+            this.label15.Text = "Длина субцепи:";
+            // 
+            // tbSubchainLength
+            // 
+            this.tbSubchainLength.Location = new System.Drawing.Point(368, 49);
+            this.tbSubchainLength.Name = "tbSubchainLength";
+            this.tbSubchainLength.Size = new System.Drawing.Size(63, 20);
+            this.tbSubchainLength.TabIndex = 32;
+            this.tbSubchainLength.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // Form1
             // 
@@ -663,10 +692,13 @@
         private System.Windows.Forms.TabPage tpageRecolor;
         private System.Windows.Forms.Button btnChooseMgel;
         private System.Windows.Forms.TextBox tbMicrogelPath;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox tbRecolorLength;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Button button4;
         private System.ComponentModel.BackgroundWorker bgWorkerRecolor;
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.TextBox tbSubchainLength;
     }
 }
 

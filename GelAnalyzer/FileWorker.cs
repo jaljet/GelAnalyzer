@@ -57,12 +57,12 @@ namespace GelAnalyzer
 
             for (int i = 0; i < lines.Length; i++)
             {
-                var sList = ReadLine(lines[i]);
+                var sList = readLine(lines[i]);
                 var row = new double[sList.Count];
 
                 for (int j = 0; j < sList.Count; j++)
                 {
-                    row[j] = ReplaceValue(sList.ElementAt(j));
+                    row[j] = replaceValue(sList.ElementAt(j));
                 }
 
                 data.Add(row);
@@ -159,7 +159,183 @@ namespace GelAnalyzer
         }
         */
 
+        public static void LoadConfLines(out double xSize, out double ySize, out double zSize, string fileName, List<double[]> data, List<int[]> bonds, List<int[]> angles)
+        {
+            xSize = 0;
+            ySize = 0;
+            zSize = 0;
+            var lines = File.ReadAllLines(fileName);
+            var sizes = new List<double[]>();
+            bonds.Clear();
+            angles.Clear();
+            int molcount = 0;
+            int bondscount = 0;
+            int anglescount = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var sList = readLine(lines[i]);
+                if (sList.Count == 2)
+                {
+                    if (sList[1].Equals("atoms"))
+                        molcount = Convert.ToInt32(sList[0]);
+                    if (sList[1].Equals(nameof(bonds)))
+                        bondscount = Convert.ToInt32(sList[0]);
+                    if (sList[1].Equals(nameof(angles)))
+                        anglescount = Convert.ToInt32(sList[0]);
+                }
+                if (sList.Count == 4)
+                {
+                    if (sList[2] == "xlo")
+                    {
+                        sizes.Add(new double[2] { replaceValue(sList[0]), replaceValue(sList[1]) });
+                        xSize = sizes[0][1] - sizes[0][0];
+                    }
+                    if (sList[2] == "ylo")
+                    {
+                        sizes.Add(new double[2] { replaceValue(sList[0]), replaceValue(sList[1]) });
+                        ySize = sizes[1][1] - sizes[1][0];
+                    }
+                    if (sList[2] == "zlo")
+                    {
+                        sizes.Add(new double[2] { replaceValue(sList[0]), replaceValue(sList[1]) });
+                        zSize = sizes[2][1] - sizes[2][0];
+                    }
+                }
+                if (sList.Count == 1)
+                {
+                    int counter = 0;
 
+                    // Read atoms
+                    if (sList[0].Equals("Atoms"))
+                    {
+                        do
+                        {
+                            int ind = Math.Min(i + 1 + counter, lines.Length - 1);
+                            sList = readLine(lines[ind]);
+                            counter++;
+
+                            if (sList.Count >= 6)
+                            {
+                                var row = new double[5];
+                                int startLine = 3;
+
+                                if (sList[2].Length == 7)
+                                {
+                                    startLine = 2;
+                                    row[3] = AtomTypes[Convert.ToInt32(sList[1])];
+
+                                    if (sList.Count == 7)
+                                    {
+                                        row[4] = replaceValue(sList[6]);
+                                    }
+                                    else
+                                    {
+                                        row[4] = replaceValue(sList[5]);
+                                    }
+                                }
+                                else
+                                {
+                                    row[3] = AtomTypes[Convert.ToInt32(sList[2])];
+                                    row[4] = replaceValue(sList[1]);
+                                    if (sList.Count == 7) { startLine = 4; }
+                                }
+
+                                for (int j = 0; j < 3; j++)
+                                {
+                                    row[j] = replaceValue(sList[startLine + j]) - sizes[j][0];
+                                }
+                                data.Add(row);
+                            }
+                        }
+                        while (data.Count < molcount);
+                    }
+
+                    // Read bonds and angles
+                    if (bondscount != 0 || (uint)anglescount > 0U)
+                    {
+                        if (sList[0].Equals("Bonds"))
+                        {
+                            counter = 0;
+                            do
+                            {
+                                int ind = Math.Min(i + 1 + counter, lines.Length - 1);
+                                sList = readLine(lines[ind]);
+                                counter++;
+                                if (data.Count >= 100000)
+                                {
+                                    if (sList.Count == 2)
+                                        bonds.Add(new int[3]
+                                        {
+                                        Convert.ToInt32(sList[1].Substring(1, 6)),
+                                        Convert.ToInt32(sList[1].Substring(7, 6)),
+                                        Convert.ToInt32(sList[1].Substring(0, 1))
+                                        });
+                                    if (sList.Count == 3)
+                                    {
+                                        if (sList[1].Length == 1)
+                                            bonds.Add(new int[3]
+                                            {
+                                             Convert.ToInt32(sList[2].Substring(0, 5)),
+                                             Convert.ToInt32(sList[2].Substring(5, 6)),
+                                             Convert.ToInt32(sList[1])
+                                            });
+                                        else
+                                            bonds.Add(new int[3]
+                                            {
+                                             Convert.ToInt32(sList[1].Substring(1, 6)),
+                                             Convert.ToInt32(sList[2]),
+                                             Convert.ToInt32(sList[1].Substring(0, 1))
+                                            });
+                                    }
+                                    if (sList.Count == 4)
+                                        bonds.Add(new int[3]
+                                        {
+                                         Convert.ToInt32(sList[2]),
+                                         Convert.ToInt32(sList[3]),
+                                         Convert.ToInt32(sList[1])
+                                        });
+                                }
+                                else if (sList.Count == 4)
+                                    bonds.Add(new int[3]
+                                    {
+                                     Convert.ToInt32(sList[2]),
+                                     Convert.ToInt32(sList[3]),
+                                     Convert.ToInt32(sList[1])
+                                    });
+                            }
+                            while (bonds.Count < bondscount);
+                        }
+                        if (sList[0].Equals("Angles"))
+                        {
+                            counter = 0;
+                            do
+                            {
+                                var ind = Math.Min(i + 1 + counter, lines.Length - 1);
+                                sList = readLine(lines[ind]);
+                                counter++;
+                                if (sList.Count == 5 && angles != null)
+                                    angles.Add(new int[4]
+                                    {
+                                     Convert.ToInt32(sList[2]),
+                                     Convert.ToInt32(sList[3]),
+                                     Convert.ToInt32(sList[4]),
+                                     Convert.ToInt32(sList[1])
+                                    });
+                                if (ind == lines.Length - 1)
+                                {
+                                    break;
+                                }
+                            }
+                            while (angles.Count < anglescount);
+                        }
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
         private static string[] ReadLammpstrjFile(string fileName)
          {
              using (StreamReader file = new StreamReader(fileName))
@@ -218,15 +394,15 @@ namespace GelAnalyzer
                 {
                     for (int j = 0; j < 3; j++)
                     {
-                        var sList = ReadLine(lines[i + j + 1]);
+                        var sList = readLine(lines[i + j + 1]);
                         if (sList[0].Length == 22 || sList[0].Length == 23)
                         {
-                            double maxSize = ReplaceValue(sList[1].Substring(0, 4)) * Math.Pow(10.0, (double)Convert.ToInt32(sList[1].Substring(20)));
-                            double minSize = ReplaceValue(sList[0].Substring(0, 4)) * Math.Pow(10.0, (double)Convert.ToInt32(sList[0].Substring(20)));
+                            double maxSize = replaceValue(sList[1].Substring(0, 4)) * Math.Pow(10.0, (double)Convert.ToInt32(sList[1].Substring(20)));
+                            double minSize = replaceValue(sList[0].Substring(0, 4)) * Math.Pow(10.0, (double)Convert.ToInt32(sList[0].Substring(20)));
                             sizes[j] = maxSize - minSize;
                         }
                         else
-                            sizes[j] = ReplaceValue(sList[1]) - ReplaceValue(sList[0]);
+                            sizes[j] = replaceValue(sList[1]) - replaceValue(sList[0]);
                     }
                 }
                 if (lines[i] == "ITEM: ATOMS id type xs ys zs")
@@ -234,7 +410,7 @@ namespace GelAnalyzer
                     List<double[]> atomList = new List<double[]>();
                     for (int j = 0; j < molcount; j++)
                     {
-                        var sList = ReadLine(lines[i + j + 1]);
+                        var sList = readLine(lines[i + j + 1]);
                         double[] row = new double[sList.Count];
                         for (int k = 0; k < sList.Count; k++)
                         {
@@ -247,7 +423,7 @@ namespace GelAnalyzer
                                     row[k] = AtomTypes[Convert.ToInt32(sList[1])];
                                     break;
                                 default:
-                                    row[k] = Math.Round(ReplaceValue(sList[k]) * sizes[k - 2], 3);
+                                    row[k] = Math.Round(replaceValue(sList[k]) * sizes[k - 2], 3);
                                     if (row[k] < 0.0)
                                         row[k] = 0.0;
                                     break;
@@ -274,7 +450,7 @@ namespace GelAnalyzer
             return data;
         }
 
-        private static List<string> ReadLine(string line)
+        private static List<string> readLine(string line)
          {
              string[] strs = line.Split(new char[] { ' ' });
 
@@ -382,7 +558,7 @@ namespace GelAnalyzer
              return sList;
          }
 
-          private static double ReplaceValue(string str)
+          private static double replaceValue(string str)
         {
             string symbol = "";
             double retValue = 0;
