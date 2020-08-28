@@ -366,7 +366,7 @@ namespace GelAnalyzer
 
 
 
-                    #region перекраска одного геля в диблочный
+                  
 
                     //List<double[]> gelcolored = new List<double[]>(); //just a temporary list
                     //List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
@@ -402,7 +402,7 @@ namespace GelAnalyzer
                     //    , 0, 0, 0, gelcolored);
                     //FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
                     //                         1, sizes, 3, colormol);
-                    #endregion
+                    
 
 
 
@@ -587,7 +587,8 @@ namespace GelAnalyzer
                                     //(double[])args[3], 3, (List<MolData>)args[2]);
         }
 
-        private void btnChooseMgel_Click(object sender, EventArgs e)
+        private void btnChooseMgel_Click(object sender, EventArgs e)  //in fact it's related to recolor page when user choose path
+                                                                                        //to microgel which should be recolored
         {
             openFileDialog.Filter = "Конфиг. файлы Lammps (*.*)|*.*";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -596,6 +597,9 @@ namespace GelAnalyzer
                 tbMicrogelPath.Text = openFileDialog.FileName;
             }
         }
+
+
+        #region перекраска одного геля в диблочный
 
         private void button4_Click(object sender, EventArgs e)
         {
@@ -674,6 +678,9 @@ namespace GelAnalyzer
 
             e.Result = new object[] { mGel, sizes, savePath };
         }
+
+        #endregion
+
 
         private void bgWorkerRecolor_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
