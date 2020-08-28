@@ -371,11 +371,10 @@ namespace GelAnalyzer
             basecLinker.AtomType = 1.01;
             basecLinker.MolIndex = 2;
 
-            doNetworkWalk(basecLinker, colorLength, subchainLength, 0, 0, false, mGel);
-
+            crossLinkerWalk(basecLinker, colorLength, subchainLength, 0, 0, false, mGel);
         }
 
-        private static void doNetworkWalk(MolData currBead, int colorLength, int subchainLength, 
+        private static void crossLinkerWalk(MolData currBead, int colorLength, int subchainLength, 
                                           int colorCounter, int sChainCounter, bool chainRecolored,
                                           List<MolData> mGel)
         {
@@ -392,71 +391,83 @@ namespace GelAnalyzer
                 {
                     colorCounter = 1;
                 }
-                   
-                    doNetworkWalk(mGel[c - 1], colorLength, subchainLength, colorCounter, 1, chainRecolored, mGel);
+
+                    walkAlongSubchain(mGel[c - 1], colorLength, subchainLength, colorCounter, 1, chainRecolored, mGel);
                 }     
             }
+        }
+
+        private static void walkAlongSubchain(MolData currBead, int colorLength, int subchainLength,
+                                         int colorCounter, int sChainCounter, bool chainRecolored,
+                                         List<MolData> mGel)
+        {
             // обходы вдоль субцепей
-            else
+            foreach (var c in currBead.Bonds)
             {
-                foreach (var c in currBead.Bonds)
+                // MolIndex = 2 means that this bead has been visited
+
+                var nextBead = mGel[c - 1];
+                if (nextBead.MolIndex != 2)
                 {
-                    // MolIndex = 2 means that this bead has been visited
+                    nextBead.MolIndex = 2;
+                    sChainCounter++;
 
-                    var nextBead = mGel[c - 1];
-                    if (nextBead.MolIndex != 2)
+                    if (currBead.AtomType == 1.01)
                     {
-                        nextBead.MolIndex = 2;
-                        sChainCounter++;
-
-                        if (currBead.AtomType == 1.01)
+                        if (colorCounter < colorLength && !chainRecolored)
                         {
-                            if (colorCounter < colorLength && !chainRecolored)
+                            nextBead.AtomType = 1.01;
+                            colorCounter++;
+                        }
+                        else
+                        {
+                            chainRecolored = true;
+                            colorCounter = 0;
+
+                            if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
                             {
+                                sChainCounter = 0;
+                                chainRecolored = false;
                                 nextBead.AtomType = 1.01;
-                                colorCounter++;
                             }
-                            else
+
+                        }
+                    }
+                    else
+                    {
+                        if (chainRecolored)
+                        {
+                            if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
                             {
-                                chainRecolored = true;
-                                colorCounter = 0;
-
-                                if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
-                                {
-                                    sChainCounter = 0;
-                                    chainRecolored = false;
-                                    nextBead.AtomType = 1.01;
-                                }
-
+                                sChainCounter = 0;
+                                chainRecolored = false;
                             }
                         }
                         else
                         {
-                            if (chainRecolored)
+                            if (sChainCounter > subchainLength - colorLength)
                             {
-                                if (nextBead.Bonds.Count > 2 || sChainCounter > subchainLength)
-                                {
-                                    sChainCounter = 0;
-                                    chainRecolored = false;
-                                }
-                            }
-                            else
-                            {
-                                if (sChainCounter > subchainLength - colorLength)
-                                {
-                                    colorCounter++;
-                                    nextBead.AtomType = 1.01;
-                                }
+                                colorCounter++;
+                                nextBead.AtomType = 1.01;
                             }
                         }
-                        doNetworkWalk(nextBead, colorLength, subchainLength, colorCounter, sChainCounter, chainRecolored, mGel);
+                    }
+
+                    if (nextBead.Bonds.Count > 2 || sChainCounter == 0)
+                    {
+                        crossLinkerWalk(nextBead, colorLength, subchainLength, colorCounter, 0, false, mGel);
                     }
                     else
                     {
-                        continue;
+                        walkAlongSubchain(nextBead, colorLength, subchainLength, colorCounter, sChainCounter, chainRecolored, mGel);
+
                     }
                 }
-            }
+                else
+                {
+                    continue;
+                }
+                }
         }
 
         private static List<MolData> GetCrossLinkers(List<MolData> mgel)
