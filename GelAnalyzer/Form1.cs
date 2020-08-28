@@ -14,6 +14,8 @@ namespace GelAnalyzer
 
     public partial class Form1 : Form
     {
+
+
         public Form1()
         {
             InitializeComponent();
@@ -366,40 +368,40 @@ namespace GelAnalyzer
 
                     #region перекраска одного геля в диблочный
 
-                    List<double[]> gelcolored = new List<double[]>(); //just a temporary list
-                    List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
-                    for (int j = 0; j < molAmount; j++)
-                    {
-                        List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
-                        List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
-                        beadstocolor.AddRange(SortBCrossSections);
-                        //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
-                        List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
-                                                                                                                //centers to type-2 
+                    //List<double[]> gelcolored = new List<double[]>(); //just a temporary list
+                    //List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
+                    //for (int j = 0; j < molAmount; j++)
+                    //{
+                    //    List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
+                    //    List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
+                    //    beadstocolor.AddRange(SortBCrossSections);
+                    //    //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
+                    //    List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
+                    //                                                                                            //centers to type-2 
 
-                        beadstocolor.AddRange(SortBNeighbours);
-                        /* foreach (var c in file)
-                        {
-                            if (crossSections.Contains(c))
-                            {
-                                beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
-                            }
-                        }
-                        beadstocolor.AddRange(beadsAround);*/
+                    //    beadstocolor.AddRange(SortBNeighbours);
+                    //    /* foreach (var c in file)
+                    //    {
+                    //        if (crossSections.Contains(c))
+                    //        {
+                    //            beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
+                    //        }
+                    //    }
+                    //    beadstocolor.AddRange(beadsAround);*/
 
-                    }
-                    gelcolored.AddRange(file);
-                    foreach (var c in gelcolored) //recoloring beads
-                    {
-                        if (beadstocolor.Contains(c))
-                        {
-                            c[3] = 2;
-                        }
-                    }
-                    colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                        , 0, 0, 0, gelcolored);
-                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
-                                             1, sizes, 3, colormol);
+                    //}
+                    //gelcolored.AddRange(file);
+                    //foreach (var c in gelcolored) //recoloring beads
+                    //{
+                    //    if (beadstocolor.Contains(c))
+                    //    {
+                    //        c[3] = 2;
+                    //    }
+                    //}
+                    //colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                    //    , 0, 0, 0, gelcolored);
+                    //FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
+                    //                         1, sizes, 3, colormol);
                     #endregion
 
 
@@ -585,21 +587,111 @@ namespace GelAnalyzer
                                     //(double[])args[3], 3, (List<MolData>)args[2]);
         }
 
+        private void btnChooseMgel_Click(object sender, EventArgs e)
+        {
+            openFileDialog.Filter = "Конфиг. файлы Lammps (*.*)|*.*";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                openFileDialog.InitialDirectory = openFileDialog.FileName;
+                tbMicrogelPath.Text = openFileDialog.FileName;
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var colorLength = Convert.ToInt32(tbRecolorLength.Text);
+            var subchainLength = Convert.ToInt32(tbSubchainLength.Text);
+
+            List<double[]> inputMg = new List<double[]>();
+            List<int[]> mgBonds = new List<int[]>();
+            List<int[]> mgAngles = new List<int[]>();
+
+            var sizes = new double[] { 0.0, 0.0, 0.0 };
+            try
+            {
+                FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);           
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Произошла ошибка при чтении!\nУбедитесь, что выбранный файл имеет нужный формат!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return;
+            }
+
+            bgWorkerRecolor.RunWorkerAsync(new object[] { inputMg, mgBonds, colorLength, subchainLength, sizes });
+        }
+
         private void bgWorkerRecolor_DoWork(object sender, DoWorkEventArgs e)
         {
+            var args = (object[])e.Argument;
+            var mol = (List<double[]>)args[0];
+            var bonds = (List<int[]>)args[1];
+            var colorLength = (int)args[2];
+            var subchainLength = (int)args[3];
+            var sizes = (double[])args[4];
 
+            var mGel = MolData.ConvertToMolData(mol, true, bonds);
+            
+            // Do the recolor
+            Analyzer.RecolorALL(mGel, subchainLength, colorLength);
+
+          
+
+            //List<double[]> gelcolored = new List<double[]>(); //just a temporary list
+            //List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
+            //for (int j = 0; j < molAmount; j++)
+            //{
+            //    List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
+            //    List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
+            //    beadstocolor.AddRange(SortBCrossSections);
+            //    //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
+            //    List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
+            //                                                                                            //centers to type-2 
+
+            //    beadstocolor.AddRange(SortBNeighbours);
+            //    /* foreach (var c in file)
+            //    {
+            //        if (crossSections.Contains(c))
+            //        {
+            //            beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
+            //        }
+            //    }
+            //    beadstocolor.AddRange(beadsAround);*/
+
+            //}
+            //gelcolored.AddRange(file);
+            //foreach (var c in gelcolored) //recoloring beads
+            //{
+            //    if (beadstocolor.Contains(c))
+            //    {
+            //        c[3] = 2;
+            //    }
+            //}
+            //colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+            //    , 0, 0, 0, gelcolored);
+
+            var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
+
+            e.Result = new object[] { mGel, sizes, savePath };
         }
 
         private void bgWorkerRecolor_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-
+            pBar.Value = e.ProgressPercentage;
         }
 
         private void bgWorkerRecolor_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            var args = (object[])e.Result;
+            var mGel = (List<MolData>)args[0];
+            var sizes = (double[])args[1];
+            var savePath = (string)args[2];
+            pBar.Value = 0;
+
+            FileWorker.SaveLammpstrj(false, savePath + "//diblocked" + ".lammpstrj",
+                                    1, sizes, 0, mGel);
 
         }
+
     }
-
-
 }
