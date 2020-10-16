@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -231,7 +232,9 @@ namespace GelAnalyzer
                 var molAmount = Convert.ToInt32(tbA.Text);
                 var eps = Convert.ToDouble(tbStep.Text);
                 var centre = Convert.ToDouble(tbDensCentre.Text);
-                bgWorkerFindGroup.RunWorkerAsync(new object[] { numberN, files, molAmount,eps, centre });
+                bool makecentercut = Convert.ToBoolean(checkCenterCut.Checked);
+                bool getOrientationalOrderParameter = Convert.ToBoolean(checkAxOrientationalParameter.Checked);
+                bgWorkerFindGroup.RunWorkerAsync(new object[] { numberN, files, molAmount,eps, centre, makecentercut, getOrientationalOrderParameter });
                 
             //}
             /*catch{
@@ -252,9 +255,13 @@ namespace GelAnalyzer
             var molAmount = (int)args[2]; //число молекул
             var epsilon = (double)args[3]; //половина толщины слоя
             var centre = (double)args[4]; //расположение межфазной границы (для вычисления в одном слое)
+            bool docentercut = (bool)args[5]; //вырезаем центральные в монослое гели в отдельный снэпшот или нет
+            bool calcOrientationalOrder = (bool)args[6]; //считаем или не считаем ориентационный параметр порядка
 
             var masscenters = new double[molAmount];
-            var res = new double[7]; // содержит данные об xy радиусе, z радиусе и их среднеквадратичных отклонениях
+            var res = new double[11]; // содержит данные об xy радиусе, z радиусе и их среднеквадратичных отклонениях, плотностях в выделенном слое
+                                                                        //и параметре порядка для типа А и В
+
             var density = new double[3]; //результат подсчёта плотности полимера, общей плотности и об. доли полимера в слое системы
             int molCount = 0; 
             int snapCount = 1;
@@ -266,8 +273,20 @@ namespace GelAnalyzer
             double[] XY = new double[molAmount];
             double[] Z = new double[molAmount];
 
+            double[] XOrientationalOrderTypeA = new double[molAmount];//массив ориентационных параметров порядков у гелей, из него получаем общий параметр
+            double[] XOrientationalOrderTypeB = new double[molAmount];
+            double[] YOrientationalOrderTypeA = new double[molAmount];
+            double[] YOrientationalOrderTypeB = new double[molAmount];
 
-            double[] poldens = new double[files.Length]; //потности полимера, полная, объёмная полимера
+
+            var gelXAnglesTypeA = new List<double>();//храним в рамках одного геля значения 3*cos^2 -1 у отдельных бидов относительно Х или Y оси
+            var gelXAnglesTypeB = new List<double>();
+            var gelYAnglesTypeA = new List<double>();
+            var gelYAnglesTypeB = new List<double>();
+
+
+
+            double[] poldens = new double[files.Length]; //плотность полимера, полная плотность, объёмная плотность полимера
             double[] fulldens = new double[files.Length];
             double[] volpoldens = new double[files.Length];
             var cylmol = new List<MolData>();
@@ -298,144 +317,153 @@ namespace GelAnalyzer
                         var mol = file.Skip(j * numberN).Take(numberN).ToList();
 
                         var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
-                        
+
                         Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
                         XY[j] = StructFormer.GetHydroRadius2D(mol);
                         Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
 
 
-
-                        #region work with one gel для проверки расположения не у стенки
-                        var Yrad = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 1));
-                        var Xrad = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 0));
-
-                        var distX = Math.Abs(mol.Max(x => x[0]) - mol.Min(x => x[0]));
-                        var distY = Math.Abs(mol.Max(x => x[1]) - mol.Min(x => x[1]));
-
-                        if (distX < sizes[0] * 0.95 && distY < sizes[1] * 0.95)
+                        #region вычисление радиусов гелей по ансамблю и среднекв. отклонений в плоскости XY и в проекции на ось Z
+                        double radXY, radZ;
+                        double summ = 0;
+                        for (int k = 0; k < XY.Length; k++)
                         {
-                            centers.Add(StructFormer.GetCenterMass(mol));
-                            cXY.Add(XY[j]);
+                            summ += XY[k];
+                        }
+                        radXY = summ / molAmount; summ = 0;
+                        XYfull[i] = Math.Round(radXY, 2);
+
+                        for (int k = 0; k < Z.Length; k++)
+                        {
+                            summ += Z[k];
+                        }
+                        radZ = summ / molAmount; summ = 0;
+                        Zfull[i] = Math.Round(radZ, 2);
+                        #endregion
+
+                        if (docentercut)
+                        {
+                            #region work with one gel для проверки расположения не у стенки
+
+
+                            var Yrad = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 1));
+                            var Xrad = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 0));
+
+                            var distX = Math.Abs(mol.Max(x => x[0]) - mol.Min(x => x[0]));
+                            var distY = Math.Abs(mol.Max(x => x[1]) - mol.Min(x => x[1]));
+
+                            if (distX < sizes[0] * 0.95 && distY < sizes[1] * 0.95)
+                            {
+                                centers.Add(StructFormer.GetCenterMass(mol));
+                                cXY.Add(XY[j]);
+                            }
+
+
+
+
+                            #endregion
+
+                            #region отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
+                            List<double[]> cylinders = new List<double[]>();
+                            for (int k = 0; k < centers.Count; k++)
+                            {
+
+                                cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
+                                                                    <= 0.33 * cXY[k]).ToList());
+                            }
+
+                            cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                , 0, 0, 0, cylinders);
+
+                            FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
+                                                     1, sizes, 3, cylmol);
+
+                            #endregion
                         }
 
-                        //List<double[]> gelmols = new List<double[]>();
-                        //foreach (var c in mols)
-                        //{
-                        //    if (c[3] == 1.000)
-                        //    {
-                        //        gelmols.Add(c);
-                        //    }
-                        //}
-                        //Boolean flag = true; //для прерывания, если неправильные биды
-                        //while(flag)
-                        //{
-                        //        foreach (var c in gelmols)
-                        //        {
-                        //        if (Xrad < sizes[0] / 2.0 && Yrad < sizes[1] / 2.0)
-                        //            {
-                        //                flag = false;
-                        //            }
-                        //        }
-                        //}
-                        //if (flag)
-                        //{
-                        //    cXY.Add(XY[j]);
-                        //    centergelAmount++;
+                        
+                        if (calcOrientationalOrder)
+                        {
+                            #region вычисление ориентационного параметра порядка для одного геля
+
+                            double XCosAngle = 0;
+                            double YCosAngle = 0;
+
+                            for (int m = 0; m < numberN; m++)
+                            {
+                                if (mol[m][3] == 1) //type A
+                                {
+
+                                    XCosAngle = Math.Cos(Analyzer.GetXYPlaneAngle(mol[m][0], mol[m][0], mol[m][1], 0));
+                                    YCosAngle = Math.Cos(Analyzer.GetXYPlaneAngle(mol[m][0], 0, mol[m][1], mol[m][1]));
+
+                                    gelXAnglesTypeA.Add(3 * XCosAngle * XCosAngle - 1);
+                                    gelYAnglesTypeA.Add(3 * YCosAngle * YCosAngle - 1);
+                                    XCosAngle = 0;
+                                    YCosAngle = 0;
+
+                                }
+                                
+                                if (mol[m][3] == 1.01) //type B
+                                {
+
+                                    XCosAngle = Math.Cos(Analyzer.GetXYPlaneAngle(mol[m][0], mol[m][0], mol[m][1], 0));
+                                    YCosAngle = Math.Cos(Analyzer.GetXYPlaneAngle(mol[m][0], 0, mol[m][1], mol[m][1]));
+
+                                    gelXAnglesTypeB.Add(3 * XCosAngle * XCosAngle - 1);
+                                    gelYAnglesTypeB.Add(3 * YCosAngle * YCosAngle - 1);
+                                    XCosAngle = 0;
+                                    YCosAngle = 0;
+                                }
+                            }
+
+                            double sumAngle = 0;
+                            double meantAngle = 0;
+
+
+                            for (int p = 0; p < gelXAnglesTypeA.Count; p++)
+                            {
+                                sumAngle += gelXAnglesTypeA[p];
+                            }
+                            meantAngle = sumAngle / gelXAnglesTypeA.Count;
+                            XOrientationalOrderTypeA[j] = 0.5 * meantAngle;
+                            sumAngle = 0; meantAngle = 0;
+
+                            for (int p = 0; p < gelYAnglesTypeA.Count; p++)
+                            {
+                                sumAngle += gelYAnglesTypeA[p];
+                            }
+                            meantAngle = sumAngle / gelXAnglesTypeA.Count;
+                            YOrientationalOrderTypeA[j] = 0.5 * meantAngle;
+                            sumAngle = 0; meantAngle = 0;
+
+                            for (int p = 0; p < gelXAnglesTypeB.Count; p++)
+                            {
+                                sumAngle += gelXAnglesTypeB[p];
+                            }
+                            meantAngle = sumAngle / gelXAnglesTypeB.Count;
+                            XOrientationalOrderTypeB[j] = 0.5 * meantAngle;
+                            sumAngle = 0; meantAngle = 0;
+
+
+                            for (int p = 0; p < gelYAnglesTypeB.Count; p++)
+                            {
+                                sumAngle += gelYAnglesTypeB[p];
+                            }
+                            meantAngle = sumAngle / gelYAnglesTypeB.Count;
+                            YOrientationalOrderTypeB[j] = 0.5 * meantAngle;
+                            sumAngle = 0; meantAngle = 0;
+                            
+                        }
 
                         #endregion
+
                     }
 
-                    #region вычисление радиусов гелей по ансамблю и среднекв. отклонений в плоскости XY и в проекции на ось Z
-                    double radXY, radZ;
-                    double summ=0;
-                    for (int k =0; k < XY.Length; k++)
-                    {
-                        summ += XY[k];
-                    }
-                    radXY = summ / molAmount; summ = 0;
-                    XYfull[i] = Math.Round(radXY,2);
-
-                    for (int k = 0; k < Z.Length; k++)
-                    {
-                        summ += Z[k];
-                    }
-                    radZ = summ / molAmount; summ = 0;
-                    Zfull[i] = Math.Round(radZ,2);
-                    #endregion
-
-
-
-                  
-
-                    //List<double[]> gelcolored = new List<double[]>(); //just a temporary list
-                    //List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
-                    //for (int j = 0; j < molAmount; j++)
-                    //{
-                    //    List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
-                    //    List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
-                    //    beadstocolor.AddRange(SortBCrossSections);
-                    //    //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
-                    //    List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
-                    //                                                                                            //centers to type-2 
-
-                    //    beadstocolor.AddRange(SortBNeighbours);
-                    //    /* foreach (var c in file)
-                    //    {
-                    //        if (crossSections.Contains(c))
-                    //        {
-                    //            beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
-                    //        }
-                    //    }
-                    //    beadstocolor.AddRange(beadsAround);*/
-
-                    //}
-                    //gelcolored.AddRange(file);
-                    //foreach (var c in gelcolored) //recoloring beads
-                    //{
-                    //    if (beadstocolor.Contains(c))
-                    //    {
-                    //        c[3] = 2;
-                    //    }
-                    //}
-                    //colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                    //    , 0, 0, 0, gelcolored);
-                    //FileWorker.SaveLammpstrj(false, tbPath.Text + "//diblocked" + (i + 1).ToString() + ".lammpstrj",
-                    //                         1, sizes, 3, colormol);
-                    
-
-
-
-                    #region отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
-                    List<double[]> cylinders = new List<double[]>();
-                    for (int j = 0; j < centers.Count; j++)
-                    {
-
-                        cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[j][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[j][1]), 2))
-                                                            <= 0.33 * cXY[j]).ToList());
-                    }
-
-                    cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                        , 0, 0, 0, cylinders);
-
-                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
-                                             1, sizes, 3, cylmol);
-
-                    #endregion
-                    //progress
-                    int barStep = (int)(files.Length / 100.0);
-                    if (barStep == 0)
-                    {
-                        barStep++;
-                    }
-
-                    if ((i + 1) % barStep == 0)
-                    {
-                        ((BackgroundWorker)sender).ReportProgress((int)(100.0 * ((double)(i + 1)) / ((double)files.Length)));
-                    }
-
+                    //вычисление плотностей в пограничном с межфазной границей слое    
                     #region density
-                    //вычисление плотности граничного слоя
+
                     int polOneCount = 0;
                     int polTwoCount = 0;
                     int polThreeCount = 0;
@@ -502,6 +530,20 @@ namespace GelAnalyzer
                     sizes = new double[3];
 
                     #endregion
+
+
+                    //progress
+                    int barStep = (int)(files.Length / 100.0);
+                    if (barStep == 0)
+                    {
+                        barStep++;
+                    }
+
+                    if ((i + 1) % barStep == 0)
+                    {
+                        ((BackgroundWorker)sender).ReportProgress((int)(100.0 * ((double)(i + 1)) / ((double)files.Length)));
+                    }
+                  
                 }
                 catch (Exception ex)
                 {
@@ -564,6 +606,48 @@ namespace GelAnalyzer
             res[6] = Math.Round(mfulldens, 2);
             #endregion
 
+
+            #region усредняем параметр порядка
+            double XSystemOrientationalOrderTypeA = 0;
+            double YSystemOrientationalOrderTypeA = 0;
+            double XSystemOrientationalOrderTypeB = 0;
+            double YSystemOrientationalOrderTypeB = 0;
+
+
+            for (int i = 0; i < molAmount; i++)
+            {
+                sum += XOrientationalOrderTypeA[i];
+            }
+            //XSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
+            XSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
+            res[7] = XSystemOrientationalOrderTypeA;
+
+            for (int i = 0; i < molAmount; i++)
+            {
+                sum += YOrientationalOrderTypeA[i];
+            }
+            //YSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
+            YSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
+            res[8] = YSystemOrientationalOrderTypeA;
+
+
+            for (int i = 0; i < molAmount; i++)
+            {
+                sum += XOrientationalOrderTypeB[i];
+            }
+            //XSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
+            XSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
+            res[9] = XSystemOrientationalOrderTypeB;
+
+            for (int i = 0; i < molAmount; i++) 
+            {
+                sum += YOrientationalOrderTypeB[i];
+            }
+            //YSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
+            YSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
+            res[10] = YSystemOrientationalOrderTypeB;
+            #endregion
+
             e.Result = new object[] { molCount, res, sizes};
         }
         private void bgWorkerFindGroup_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -575,16 +659,19 @@ namespace GelAnalyzer
         {
             var args = (object[])e.Result;
             tbMolNum.Text = ((int)args[0]).ToString();
-            tbXYradius.Text = (((double[])args[1])[0]).ToString();
-            tbZradius.Text = (((double[])args[1])[1]).ToString();
-            tbsqXYradius.Text = (((double[])args[1])[2]).ToString();
-            tbsqZradius.Text = (((double[])args[1])[3]).ToString();
-            tbDens1.Text = (((double[])args[1])[4]).ToString();
-            tbDens2.Text = (((double[])args[1])[5]).ToString();
-            tbDens3.Text = (((double[])args[1])[6]).ToString();
+            tbXYradius.Text = ((double[])args[1])[0].ToString();
+            tbZradius.Text = ((double[])args[1])[1].ToString();
+            tbsqXYradius.Text = ((double[])args[1])[2].ToString();
+            tbsqZradius.Text = ((double[])args[1])[3].ToString();
+            tbDens1.Text = ((double[])args[1])[4].ToString();
+            tbDens2.Text = ((double[])args[1])[5].ToString();
+            tbDens3.Text = ((double[])args[1])[6].ToString();
+            tbXOrientationalOrderTypeA.Text = ((double[])args[1])[7].ToString();
+            tbYOrientationalOrderTypeA.Text = ((double[])args[1])[8].ToString();
+            tbXOrientationalOrderTypeB.Text = ((double[])args[1])[9].ToString();
+            tbYOrientationalOrderTypeB.Text = ((double[])args[1])[10].ToString();
+
             pBar.Value = 0;
-            //FileWorker.SaveLammpstrj(false, tbPath.Text + "//res.lammpstrj", 1,
-                                    //(double[])args[3], 3, (List<MolData>)args[2]);
         }
 
         private void btnChooseMgel_Click(object sender, EventArgs e)  //in fact it's related to recolor page when user choose path
@@ -699,6 +786,5 @@ namespace GelAnalyzer
                                     1, sizes, 0, mGel);
 
         }
-
     }
 }
