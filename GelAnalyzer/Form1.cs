@@ -273,7 +273,7 @@ namespace GelAnalyzer
             double[] XY = new double[molAmount];
             double[] Z = new double[molAmount];
 
-            double[] XOrientationalOrderTypeA = new double[molAmount];//массив ориентационных параметров порядков у гелей, из него получаем общий параметр
+            double[] XOrientationalOrderTypeA = new double[molAmount];//массив ориентационных параметров порядков у гелей, из него получим общий параметр
             double[] XOrientationalOrderTypeB = new double[molAmount];
             double[] YOrientationalOrderTypeA = new double[molAmount];
             double[] YOrientationalOrderTypeB = new double[molAmount];
@@ -283,7 +283,6 @@ namespace GelAnalyzer
             var gelXAnglesTypeB = new List<double>();
             var gelYAnglesTypeA = new List<double>();
             var gelYAnglesTypeB = new List<double>();
-
 
 
             double[] poldens = new double[files.Length]; //плотность полимера, полная плотность, объёмная плотность полимера
@@ -725,41 +724,6 @@ namespace GelAnalyzer
             
             // Do the recolor
             Analyzer.RecolorALL(mGel, subchainLength, colorLength);
-
-          
-
-            //List<double[]> gelcolored = new List<double[]>(); //just a temporary list
-            //List<double[]> beadstocolor = new List<double[]>();//here all beads to recolor in type-2 
-            //for (int j = 0; j < molAmount; j++)
-            //{
-            //    List<double[]> crossSections = Analyzer.GetCrossSections(file); //all centers of stars - so called crossSections
-            //    List<double[]> SortBCrossSections = Analyzer.GetSortBCrossSections(crossSections); // some centers should be type-2 polymer
-            //    beadstocolor.AddRange(SortBCrossSections);
-            //    //List<double[]> beadsAround = new List<double[]>(); //beads around crossSections which we want recolor
-            //    List<double[]> SortBNeighbours = Analyzer.GetSortBNeighbours(file, SortBCrossSections); //here we color half of the beads near type-2 
-            //                                                                                            //centers to type-2 
-
-            //    beadstocolor.AddRange(SortBNeighbours);
-            //    /* foreach (var c in file)
-            //    {
-            //        if (crossSections.Contains(c))
-            //        {
-            //            beadsAround.AddRange(file.Where(x => (Analyzer.GetDistance(x[0], c[0], x[1], c[1], x[2], c[2]))<0.7));
-            //        }
-            //    }
-            //    beadstocolor.AddRange(beadsAround);*/
-
-            //}
-            //gelcolored.AddRange(file);
-            //foreach (var c in gelcolored) //recoloring beads
-            //{
-            //    if (beadstocolor.Contains(c))
-            //    {
-            //        c[3] = 2;
-            //    }
-            //}
-            //colormol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-            //    , 0, 0, 0, gelcolored);
 
             var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
 
