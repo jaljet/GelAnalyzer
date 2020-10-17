@@ -261,6 +261,20 @@ namespace GelAnalyzer
         }
 
 
+        public static double GetAverageOfElementFromCollection(List<double[]> Collection, int CollectionSize, int NumberOfElementToAverageInCollection)
+        {
+            double sum=0;
+            double meantvalue=0;
+            
+            for(int i=0; i < CollectionSize; i++)
+            {
+                sum += Collection[i][NumberOfElementToAverageInCollection];
+            }
+            meantvalue = Math.Round(sum / CollectionSize, 2);
+
+            return meantvalue;
+        }
+
 
         public static double GetDistance(double x1, double x2, double y1, double y2, double z1, double z2) //calculate distance between 2 beads
         {

@@ -233,8 +233,9 @@ namespace GelAnalyzer
                 var eps = Convert.ToDouble(tbStep.Text);
                 var centre = Convert.ToDouble(tbDensCentre.Text);
                 bool makecentercut = Convert.ToBoolean(checkCenterCut.Checked);
+                bool makeinterfacecut = Convert.ToBoolean(checkInterfaceCut.Checked);
                 bool getOrientationalOrderParameter = Convert.ToBoolean(checkAxOrientationalParameter.Checked);
-                bgWorkerFindGroup.RunWorkerAsync(new object[] { numberN, files, molAmount,eps, centre, makecentercut, getOrientationalOrderParameter });
+                bgWorkerFindGroup.RunWorkerAsync(new object[] { numberN, files, molAmount,eps, centre, makecentercut, getOrientationalOrderParameter, makeinterfacecut });
                 
             //}
             /*catch{
@@ -257,10 +258,13 @@ namespace GelAnalyzer
             var centre = (double)args[4]; //расположение межфазной границы (для вычисления в одном слое)
             bool docentercut = (bool)args[5]; //вырезаем центральные в монослое гели в отдельный снэпшот или нет
             bool calcOrientationalOrder = (bool)args[6]; //считаем или не считаем ориентационный параметр порядка
+            bool dointerfacecut = (bool)args[7]; //считаем плотности в приграничном слое или нет
 
             var masscenters = new double[molAmount];
             var res = new double[11]; // содержит данные об xy радиусе, z радиусе и их среднеквадратичных отклонениях, плотностях в выделенном слое
-                                                                        //и параметре порядка для типа А и В
+                                      //и параметре порядка для типа А и В в рамках одного снэпшота
+
+            List<double[]> GeneralRes = new List<double[]>();
 
             var density = new double[3]; //результат подсчёта плотности полимера, общей плотности и об. доли полимера в слое системы
             int molCount = 0; 
@@ -295,16 +299,13 @@ namespace GelAnalyzer
 
             for (int i = 0; i < files.Length; i++)
             {
-
+                res = new double[11];
                 try
                 {
-                
-                    var file = FileWorker.LoadLammpstrjLines(files[i], out snapCount, out  sizes);
-                    //double[] XY = new double[molAmount];
-                    //double[] Z = new double[molAmount];
+
+                    var file = FileWorker.LoadLammpstrjLines(files[i], out snapCount, out sizes);
 
                     List<double[]> centermass = new List<double[]>();
-                    int centergelAmount=0; //счётчик числа гелей, которые не у стенки
                     List<double[]> centers = new List<double[]>(); //центры масс гелей не у стенки
                     List<double> cXY = new List<double>(); //Rxy гелей не у стенки
 
@@ -323,23 +324,7 @@ namespace GelAnalyzer
                         Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
 
 
-                        #region вычисление радиусов гелей по ансамблю и среднекв. отклонений в плоскости XY и в проекции на ось Z
-                        double radXY, radZ;
-                        double summ = 0;
-                        for (int k = 0; k < XY.Length; k++)
-                        {
-                            summ += XY[k];
-                        }
-                        radXY = summ / molAmount; summ = 0;
-                        XYfull[i] = Math.Round(radXY, 2);
-
-                        for (int k = 0; k < Z.Length; k++)
-                        {
-                            summ += Z[k];
-                        }
-                        radZ = summ / molAmount; summ = 0;
-                        Zfull[i] = Math.Round(radZ, 2);
-                        #endregion
+                        
 
                         if (docentercut)
                         {
@@ -363,6 +348,11 @@ namespace GelAnalyzer
 
                             #endregion
 
+                            
+                        }
+
+                        if (docentercut)
+                        {
                             #region отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
                             List<double[]> cylinders = new List<double[]>();
                             for (int k = 0; k < centers.Count; k++)
@@ -381,7 +371,6 @@ namespace GelAnalyzer
                             #endregion
                         }
 
-                        
                         if (calcOrientationalOrder)
                         {
                             #region вычисление ориентационного параметра порядка для одного геля
@@ -403,7 +392,7 @@ namespace GelAnalyzer
                                     YCosAngle = 0;
 
                                 }
-                                
+
                                 if (mol[m][3] == 1.01) //type B
                                 {
 
@@ -453,84 +442,107 @@ namespace GelAnalyzer
                             meantAngle = sumAngle / gelYAnglesTypeB.Count;
                             YOrientationalOrderTypeB[j] = 0.5 * meantAngle;
                             sumAngle = 0; meantAngle = 0;
-                            
+
                         }
 
                         #endregion
 
                     }
 
-                    //вычисление плотностей в пограничном с межфазной границей слое    
-                    #region density
+                    /*  #region вычисление радиусов гелей по ансамблю и среднекв. отклонений в плоскости XY и в проекции на ось Z
+                          double radXY, radZ;
+                          double summ = 0;
+                          for (int k = 0; k < XY.Length; k++)
+                          {
+                              summ += XY[k];
+                          }
+                          radXY = summ / molAmount; summ = 0;
+                          XYfull[i] = Math.Round(radXY, 2);
 
-                    int polOneCount = 0;
-                    int polTwoCount = 0;
-                    int polThreeCount = 0;
-                    int solvAcount = 0;
-                    int solvBcount = 0;
-                    int watercount = 0;
-                    int totalcount = 0;
+                          for (int k = 0; k < Z.Length; k++)
+                          {
+                              summ += Z[k];
+                          }
+                          radZ = summ / molAmount; summ = 0;
+                          Zfull[i] = Math.Round(radZ, 2);
+                          #endregion
+                      */
 
-                    //изначальный вариант
-                    var layer = file.Where(x => x[2] > (centre - epsilon) &&
-                    x[2] <= (centre + epsilon)).ToList();
+                    //вычисление плотностей в пограничном с межфазной границей слое 
 
-                    //для асимметричных случаев
-                    var layer1 = file.Where(x => x[2] <= centre && x[2] >= (centre - 2 * epsilon)).ToList();
-
-                    //для симметричных случаев
-                    var layer2 = file.Where(x => x[2] >= centre && x[2] <= (centre + 2 * epsilon)).ToList();
-                  
-
-                    double h = 2.0*epsilon;
-
-                    totalcount += layer1.Count;
-                    if (totalcount == 0)
+                    if (dointerfacecut)
                     {
-                        totalcount++;
+
+                        #region density
+
+                        int polOneCount = 0;
+                        int polTwoCount = 0;
+                        int polThreeCount = 0;
+                        int solvAcount = 0;
+                        int solvBcount = 0;
+                        int watercount = 0;
+                        int totalcount = 0;
+
+                        //изначальный вариант
+                        var layer = file.Where(x => x[2] > (centre - epsilon) &&
+                        x[2] <= (centre + epsilon)).ToList();
+
+                        //для асимметричных случаев
+                        var layer1 = file.Where(x => x[2] <= centre && x[2] >= (centre - 2 * epsilon)).ToList();
+
+                        //для симметричных случаев
+                        var layer2 = file.Where(x => x[2] >= centre && x[2] <= (centre + 2 * epsilon)).ToList();
+
+
+                        double h = 2.0 * epsilon;
+
+                        totalcount += layer1.Count;
+                        if (totalcount == 0)
+                        {
+                            totalcount++;
+                        }
+
+                        foreach (var c in layer1)
+                        {
+                            if (c[3] == 1.000)
+                            {
+                                polOneCount++;
+                            }
+                            if (c[3] == 1.010)
+                            {
+                                polTwoCount++;
+                            }
+                            if (c[3] == 1.040)
+                            {
+                                polThreeCount++;
+                            }
+                            if (c[3] == 1.020)
+                            {
+                                solvAcount++;
+                            }
+                            if (c[3] == 1.070)
+                            {
+                                solvBcount++;
+                            }
+                            if (c[3] == 1.030)
+                            {
+                                watercount++;
+                            }
+                        }
+                        density[0] = Math.Round((polOneCount / (sizes[0] * sizes[1] * h)), 2); //плотность полимера
+                        density[1] = Math.Round(((double)polOneCount / (double)totalcount), 2); //объёмная доля полимера
+                        density[2] = Math.Round((totalcount / (sizes[0] * sizes[1] * h)), 2); //общая плотность
+                        poldens[i] = density[0];
+                        volpoldens[i] = density[1];
+                        fulldens[i] = density[2];
+
+                        file.Clear();
+                        snapCount = 1;
+                        sizes = new double[3];
+
+                        #endregion
+
                     }
-
-                    foreach (var c in layer1)
-                    {
-                        if (c[3] == 1.000)
-                        {
-                            polOneCount++;
-                        }
-                        if (c[3] == 1.010)
-                        {
-                            polTwoCount++;
-                        }
-                        if (c[3] == 1.040)
-                        {
-                            polThreeCount++;
-                        }
-                        if (c[3] == 1.020)
-                        {
-                            solvAcount++;
-                        }
-                        if (c[3] == 1.070)
-                        {
-                            solvBcount++;
-                        }
-                        if (c[3] == 1.030)
-                        {
-                            watercount++;
-                        }
-                    }
-                    density[0] = Math.Round((polOneCount / (sizes[0] * sizes[1] * h)), 2); //плотность полимера
-                    density[1] = Math.Round(((double)polOneCount / (double)totalcount), 2); //объёмная доля полимера
-                    density[2] = Math.Round((totalcount / (sizes[0] * sizes[1] * h)), 2); //общая плотность
-                    poldens[i] = density[0];
-                    volpoldens[i] = density[1];
-                    fulldens[i] = density[2];
-
-                    file.Clear();
-                    snapCount = 1;
-                    sizes = new double[3];
-
-                    #endregion
-
-
                     //progress
                     int barStep = (int)(files.Length / 100.0);
                     if (barStep == 0)
@@ -542,7 +554,103 @@ namespace GelAnalyzer
                     {
                         ((BackgroundWorker)sender).ReportProgress((int)(100.0 * ((double)(i + 1)) / ((double)files.Length)));
                     }
-                  
+
+                    #region средние радиусы с погрешностями и плотности в слое по ансамблю
+                    double meantradXY, meantradZ, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
+                    double sum = 0;
+                    for (int k = 0; k < XY.Length; k++)
+                    {
+                        sum += XY[k];
+                    }
+                    meantradXY = sum / molAmount; sum = 0;
+                    res[0] = Math.Round(meantradXY, 2);
+
+                    for (int k = 0; k < Z.Length; k++)
+                    {
+                        sum += Z[k];
+                    }
+                    meantradZ = sum / molAmount; sum = 0;
+                    res[1] = Math.Round(meantradZ, 2);
+
+                    for (int k = 0; k < XY.Length; k++)
+                    {
+                        sum += Math.Pow((XY[k] - meantradXY), 2);
+                    }
+                    //sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
+                    sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
+                    res[2] = Math.Round(sqradXY, 2);
+
+                    for (int k = 0; k < Z.Length; k++)
+                    {
+                        sum += Math.Pow((Z[k] - meantradZ), 2);
+                    }
+                    sqradZ = Math.Sqrt(sum / (Z.Length - 1)); sum = 0;
+                    res[3] = Math.Round(sqradZ, 2);
+
+                    for (int k = 0; k < poldens.Length; k++)
+                    {
+                        sum += Math.Pow((poldens[k]), 2);
+                    }
+                    mpoldens = Math.Sqrt(sum / (poldens.Length)); sum = 0;
+                    res[4] = Math.Round(mpoldens, 2);
+
+                    for (int k = 0; k < volpoldens.Length; k++)
+                    {
+                        sum += Math.Pow((volpoldens[k]), 2);
+                    }
+                    mvolpoldens = Math.Sqrt(sum / (fulldens.Length)); sum = 0;
+                    res[5] = Math.Round(mvolpoldens, 2);
+
+                    for (int k = 0; k < fulldens.Length; k++)
+                    {
+                        sum += Math.Pow((fulldens[k]), 2);
+                    }
+                    mfulldens = Math.Sqrt(sum / (volpoldens.Length)); sum = 0;
+                    res[6] = Math.Round(mfulldens, 2);
+                    #endregion
+
+                    #region усредняем параметр порядка
+                    double XSystemOrientationalOrderTypeA = 0;
+                    double YSystemOrientationalOrderTypeA = 0;
+                    double XSystemOrientationalOrderTypeB = 0;
+                    double YSystemOrientationalOrderTypeB = 0;
+
+
+                    for (int q = 0; q < molAmount; q++)
+                    {
+                        sum += XOrientationalOrderTypeA[q];
+                    }
+                    //XSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
+                    XSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
+                    res[7] = XSystemOrientationalOrderTypeA;
+
+                    for (int q = 0; q < molAmount; q++)
+                    {
+                        sum += YOrientationalOrderTypeA[q];
+                    }
+                    //YSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
+                    YSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
+                    res[8] = YSystemOrientationalOrderTypeA;
+
+
+                    for (int q = 0; q < molAmount; q++)
+                    {
+                        sum += XOrientationalOrderTypeB[q];
+                    }
+                    //XSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
+                    XSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
+                    res[9] = XSystemOrientationalOrderTypeB;
+
+                    for (int q = 0; q < molAmount; q++)
+                    {
+                        sum += YOrientationalOrderTypeB[i];
+                    }
+                    //YSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
+                    YSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
+                    res[10] = YSystemOrientationalOrderTypeB;
+                    #endregion
+
+                    GeneralRes.Add(res);
                 }
                 catch (Exception ex)
                 {
@@ -551,103 +659,18 @@ namespace GelAnalyzer
                 }
             }
 
-            #region средние радиусы с погрешностями и плотности в слое по ансамблю
-            double meantradXY, meantradZ, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
-            double sum = 0;           
-            for (int k = 0; k < XY.Length; k++)
+            var CalcResult = new double[11];
+
+            //усреднение по снэпшотам
+
+            for(int i=0; i<CalcResult.Length; i++)
             {
-                sum += XY[k];
+                CalcResult[i] = Analyzer.GetAverageOfElementFromCollection(GeneralRes, GeneralRes.Count, i);
             }
-            meantradXY = sum / molAmount; sum = 0;
-            res[0] = Math.Round(meantradXY, 2);
 
-            for (int k = 0; k < Z.Length; k++)
-            {
-                sum += Z[k];
-            }
-            meantradZ = sum / molAmount; sum = 0;
-            res[1] = Math.Round(meantradZ, 2);
+                    
 
-            for (int k = 0; k < XY.Length; k++)
-            {
-                sum += Math.Pow((XY[k] - meantradXY), 2);
-            }
-            //sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
-            sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
-            res[2] = Math.Round(sqradXY, 2);
-
-            for (int k = 0; k < Z.Length; k++)
-            {
-                sum += Math.Pow((Z[k] - meantradZ), 2);
-            }
-            sqradZ = Math.Sqrt(sum / (Z.Length - 1)); sum = 0;
-            res[3] = Math.Round(sqradZ, 2);
-
-            for (int k = 0; k < poldens.Length; k++)
-            {
-                sum += Math.Pow((poldens[k]), 2);
-            }
-            mpoldens = Math.Sqrt(sum / (poldens.Length)); sum = 0;
-            res[4] = Math.Round(mpoldens, 2);
-
-            for (int k = 0; k < volpoldens.Length; k++)
-            {
-                sum += Math.Pow((volpoldens[k]), 2);
-            }
-            mvolpoldens = Math.Sqrt(sum / (fulldens.Length)); sum = 0;
-            res[5] = Math.Round(mvolpoldens, 2);
-
-            for (int k = 0; k < fulldens.Length; k++)
-            {
-                sum += Math.Pow((fulldens[k]), 2);
-            }
-            mfulldens = Math.Sqrt(sum / (volpoldens.Length)); sum = 0;
-            res[6] = Math.Round(mfulldens, 2);
-            #endregion
-
-
-            #region усредняем параметр порядка
-            double XSystemOrientationalOrderTypeA = 0;
-            double YSystemOrientationalOrderTypeA = 0;
-            double XSystemOrientationalOrderTypeB = 0;
-            double YSystemOrientationalOrderTypeB = 0;
-
-
-            for (int i = 0; i < molAmount; i++)
-            {
-                sum += XOrientationalOrderTypeA[i];
-            }
-            //XSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
-            XSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
-            res[7] = XSystemOrientationalOrderTypeA;
-
-            for (int i = 0; i < molAmount; i++)
-            {
-                sum += YOrientationalOrderTypeA[i];
-            }
-            //YSystemOrientationalOrderTypeA = Math.Round(sum / molAmount, 2); sum = 0;
-            YSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
-            res[8] = YSystemOrientationalOrderTypeA;
-
-
-            for (int i = 0; i < molAmount; i++)
-            {
-                sum += XOrientationalOrderTypeB[i];
-            }
-            //XSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
-            XSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
-            res[9] = XSystemOrientationalOrderTypeB;
-
-            for (int i = 0; i < molAmount; i++) 
-            {
-                sum += YOrientationalOrderTypeB[i];
-            }
-            //YSystemOrientationalOrderTypeB = Math.Round(sum / molAmount, 2); sum = 0;
-            YSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
-            res[10] = YSystemOrientationalOrderTypeB;
-            #endregion
-
-            e.Result = new object[] { molCount, res, sizes};
+            e.Result = new object[] { molCount, CalcResult, sizes};
         }
         private void bgWorkerFindGroup_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {

@@ -78,6 +78,11 @@
             this.tbDens2 = new System.Windows.Forms.TextBox();
             this.tcGeneral = new System.Windows.Forms.TabControl();
             this.tpMonolayers = new System.Windows.Forms.TabPage();
+            this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
+            this.tbYOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
+            this.lblOrientationalOrderTypeB = new System.Windows.Forms.Label();
+            this.lblOrientationalOrderTypeA = new System.Windows.Forms.Label();
+            this.tbXOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
             this.tbXOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
             this.checkCenterCut = new System.Windows.Forms.CheckBox();
             this.checkAxOrientationalParameter = new System.Windows.Forms.CheckBox();
@@ -91,11 +96,7 @@
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.tbXOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
-            this.lblOrientationalOrderTypeA = new System.Windows.Forms.Label();
-            this.lblOrientationalOrderTypeB = new System.Windows.Forms.Label();
-            this.tbYOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
-            this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
+            this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -273,7 +274,7 @@
             this.surfCov,
             this.RxyDisp,
             this.RzDisp});
-            this.dgvData.Location = new System.Drawing.Point(573, 19);
+            this.dgvData.Location = new System.Drawing.Point(626, 19);
             this.dgvData.Name = "dgvData";
             this.dgvData.Size = new System.Drawing.Size(544, 352);
             this.dgvData.TabIndex = 17;
@@ -401,7 +402,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(238, 78);
+            this.label5.Location = new System.Drawing.Point(240, 78);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(96, 13);
             this.label5.TabIndex = 28;
@@ -409,23 +410,25 @@
             // 
             // tbDens1
             // 
-            this.tbDens1.Location = new System.Drawing.Point(354, 101);
+            this.tbDens1.Location = new System.Drawing.Point(359, 101);
             this.tbDens1.Name = "tbDens1";
             this.tbDens1.Size = new System.Drawing.Size(40, 20);
             this.tbDens1.TabIndex = 29;
             // 
             // tbStep
             // 
-            this.tbStep.Location = new System.Drawing.Point(331, 52);
+            this.tbStep.Location = new System.Drawing.Point(351, 53);
             this.tbStep.Name = "tbStep";
-            this.tbStep.Size = new System.Drawing.Size(63, 20);
+            this.tbStep.Size = new System.Drawing.Size(48, 20);
             this.tbStep.TabIndex = 30;
+            this.tbStep.Text = "0,42";
             this.tbStep.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.tbStep.UseWaitCursor = true;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(220, 55);
+            this.label10.Location = new System.Drawing.Point(238, 55);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(107, 13);
             this.label10.TabIndex = 31;
@@ -434,7 +437,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(234, 105);
+            this.label11.Location = new System.Drawing.Point(240, 104);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(117, 13);
             this.label11.TabIndex = 32;
@@ -442,10 +445,12 @@
             // 
             // tbDensCentre
             // 
-            this.tbDensCentre.Location = new System.Drawing.Point(340, 75);
+            this.tbDensCentre.Location = new System.Drawing.Point(342, 75);
             this.tbDensCentre.Name = "tbDensCentre";
-            this.tbDensCentre.Size = new System.Drawing.Size(40, 20);
+            this.tbDensCentre.Size = new System.Drawing.Size(48, 20);
             this.tbDensCentre.TabIndex = 33;
+            this.tbDensCentre.Text = "0,42";
+            this.tbDensCentre.UseWaitCursor = true;
             // 
             // label12
             // 
@@ -486,12 +491,13 @@
             this.tcGeneral.Location = new System.Drawing.Point(2, 1);
             this.tcGeneral.Name = "tcGeneral";
             this.tcGeneral.SelectedIndex = 0;
-            this.tcGeneral.Size = new System.Drawing.Size(1144, 425);
+            this.tcGeneral.Size = new System.Drawing.Size(1185, 425);
             this.tcGeneral.TabIndex = 38;
             // 
             // tpMonolayers
             // 
             this.tpMonolayers.BackColor = System.Drawing.SystemColors.Control;
+            this.tpMonolayers.Controls.Add(this.checkInterfaceCut);
             this.tpMonolayers.Controls.Add(this.tbYOrientationalOrderTypeB);
             this.tpMonolayers.Controls.Add(this.tbYOrientationalOrderTypeA);
             this.tpMonolayers.Controls.Add(this.lblOrientationalOrderTypeB);
@@ -536,9 +542,48 @@
             this.tpMonolayers.Location = new System.Drawing.Point(4, 22);
             this.tpMonolayers.Name = "tpMonolayers";
             this.tpMonolayers.Padding = new System.Windows.Forms.Padding(3);
-            this.tpMonolayers.Size = new System.Drawing.Size(1136, 399);
+            this.tpMonolayers.Size = new System.Drawing.Size(1177, 399);
             this.tpMonolayers.TabIndex = 0;
             this.tpMonolayers.Text = "Монослои";
+            // 
+            // tbYOrientationalOrderTypeB
+            // 
+            this.tbYOrientationalOrderTypeB.Location = new System.Drawing.Point(340, 259);
+            this.tbYOrientationalOrderTypeB.Name = "tbYOrientationalOrderTypeB";
+            this.tbYOrientationalOrderTypeB.Size = new System.Drawing.Size(68, 20);
+            this.tbYOrientationalOrderTypeB.TabIndex = 46;
+            // 
+            // tbYOrientationalOrderTypeA
+            // 
+            this.tbYOrientationalOrderTypeA.Location = new System.Drawing.Point(342, 233);
+            this.tbYOrientationalOrderTypeA.Name = "tbYOrientationalOrderTypeA";
+            this.tbYOrientationalOrderTypeA.Size = new System.Drawing.Size(66, 20);
+            this.tbYOrientationalOrderTypeA.TabIndex = 45;
+            // 
+            // lblOrientationalOrderTypeB
+            // 
+            this.lblOrientationalOrderTypeB.AutoSize = true;
+            this.lblOrientationalOrderTypeB.Location = new System.Drawing.Point(414, 262);
+            this.lblOrientationalOrderTypeB.Name = "lblOrientationalOrderTypeB";
+            this.lblOrientationalOrderTypeB.Size = new System.Drawing.Size(63, 13);
+            this.lblOrientationalOrderTypeB.TabIndex = 43;
+            this.lblOrientationalOrderTypeB.Text = "X,Y - type B";
+            // 
+            // lblOrientationalOrderTypeA
+            // 
+            this.lblOrientationalOrderTypeA.AutoSize = true;
+            this.lblOrientationalOrderTypeA.Location = new System.Drawing.Point(414, 236);
+            this.lblOrientationalOrderTypeA.Name = "lblOrientationalOrderTypeA";
+            this.lblOrientationalOrderTypeA.Size = new System.Drawing.Size(63, 13);
+            this.lblOrientationalOrderTypeA.TabIndex = 42;
+            this.lblOrientationalOrderTypeA.Text = "X,Y - type A";
+            // 
+            // tbXOrientationalOrderTypeB
+            // 
+            this.tbXOrientationalOrderTypeB.Location = new System.Drawing.Point(262, 259);
+            this.tbXOrientationalOrderTypeB.Name = "tbXOrientationalOrderTypeB";
+            this.tbXOrientationalOrderTypeB.Size = new System.Drawing.Size(66, 20);
+            this.tbXOrientationalOrderTypeB.TabIndex = 41;
             // 
             // tbXOrientationalOrderTypeA
             // 
@@ -550,7 +595,7 @@
             // checkCenterCut
             // 
             this.checkCenterCut.AutoSize = true;
-            this.checkCenterCut.Location = new System.Drawing.Point(386, 77);
+            this.checkCenterCut.Location = new System.Drawing.Point(417, 55);
             this.checkCenterCut.Name = "checkCenterCut";
             this.checkCenterCut.Size = new System.Drawing.Size(172, 17);
             this.checkCenterCut.TabIndex = 39;
@@ -656,44 +701,15 @@
             // 
             this.openFileDialog.FileName = "openFileDialog";
             // 
-            // tbXOrientationalOrderTypeB
+            // checkInterfaceCut
             // 
-            this.tbXOrientationalOrderTypeB.Location = new System.Drawing.Point(262, 259);
-            this.tbXOrientationalOrderTypeB.Name = "tbXOrientationalOrderTypeB";
-            this.tbXOrientationalOrderTypeB.Size = new System.Drawing.Size(66, 20);
-            this.tbXOrientationalOrderTypeB.TabIndex = 41;
-            // 
-            // lblOrientationalOrderTypeA
-            // 
-            this.lblOrientationalOrderTypeA.AutoSize = true;
-            this.lblOrientationalOrderTypeA.Location = new System.Drawing.Point(414, 236);
-            this.lblOrientationalOrderTypeA.Name = "lblOrientationalOrderTypeA";
-            this.lblOrientationalOrderTypeA.Size = new System.Drawing.Size(63, 13);
-            this.lblOrientationalOrderTypeA.TabIndex = 42;
-            this.lblOrientationalOrderTypeA.Text = "X,Y - type A";
-            // 
-            // lblOrientationalOrderTypeB
-            // 
-            this.lblOrientationalOrderTypeB.AutoSize = true;
-            this.lblOrientationalOrderTypeB.Location = new System.Drawing.Point(414, 262);
-            this.lblOrientationalOrderTypeB.Name = "lblOrientationalOrderTypeB";
-            this.lblOrientationalOrderTypeB.Size = new System.Drawing.Size(63, 13);
-            this.lblOrientationalOrderTypeB.TabIndex = 43;
-            this.lblOrientationalOrderTypeB.Text = "X,Y - type B";
-            // 
-            // tbYOrientationalOrderTypeA
-            // 
-            this.tbYOrientationalOrderTypeA.Location = new System.Drawing.Point(342, 233);
-            this.tbYOrientationalOrderTypeA.Name = "tbYOrientationalOrderTypeA";
-            this.tbYOrientationalOrderTypeA.Size = new System.Drawing.Size(66, 20);
-            this.tbYOrientationalOrderTypeA.TabIndex = 45;
-            // 
-            // tbYOrientationalOrderTypeB
-            // 
-            this.tbYOrientationalOrderTypeB.Location = new System.Drawing.Point(340, 259);
-            this.tbYOrientationalOrderTypeB.Name = "tbYOrientationalOrderTypeB";
-            this.tbYOrientationalOrderTypeB.Size = new System.Drawing.Size(68, 20);
-            this.tbYOrientationalOrderTypeB.TabIndex = 46;
+            this.checkInterfaceCut.AutoSize = true;
+            this.checkInterfaceCut.Location = new System.Drawing.Point(396, 78);
+            this.checkInterfaceCut.Name = "checkInterfaceCut";
+            this.checkInterfaceCut.Size = new System.Drawing.Size(226, 17);
+            this.checkInterfaceCut.TabIndex = 47;
+            this.checkInterfaceCut.Text = "Считать плотность приграничного слоя";
+            this.checkInterfaceCut.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -788,6 +804,7 @@
         private System.Windows.Forms.Label lblOrientationalOrderTypeA;
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeB;
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeA;
+        private System.Windows.Forms.CheckBox checkInterfaceCut;
     }
 }
 
