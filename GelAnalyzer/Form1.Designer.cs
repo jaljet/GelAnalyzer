@@ -78,6 +78,7 @@
             this.tbDens2 = new System.Windows.Forms.TextBox();
             this.tcGeneral = new System.Windows.Forms.TabControl();
             this.tpMonolayers = new System.Windows.Forms.TabPage();
+            this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
             this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
             this.tbYOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
             this.lblOrientationalOrderTypeB = new System.Windows.Forms.Label();
@@ -96,7 +97,7 @@
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
+            this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -124,7 +125,7 @@
             // 
             // pBar
             // 
-            this.pBar.Location = new System.Drawing.Point(31, 445);
+            this.pBar.Location = new System.Drawing.Point(30, 534);
             this.pBar.Name = "pBar";
             this.pBar.Size = new System.Drawing.Size(159, 25);
             this.pBar.TabIndex = 2;
@@ -195,7 +196,7 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(24, 357);
+            this.btnSave.Location = new System.Drawing.Point(24, 425);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(174, 30);
             this.btnSave.TabIndex = 10;
@@ -205,7 +206,7 @@
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(24, 324);
+            this.btnStart.Location = new System.Drawing.Point(24, 392);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(162, 27);
             this.btnStart.TabIndex = 11;
@@ -224,7 +225,7 @@
             // lblProgBar
             // 
             this.lblProgBar.AutoSize = true;
-            this.lblProgBar.Location = new System.Drawing.Point(28, 429);
+            this.lblProgBar.Location = new System.Drawing.Point(27, 518);
             this.lblProgBar.Name = "lblProgBar";
             this.lblProgBar.Size = new System.Drawing.Size(59, 13);
             this.lblProgBar.TabIndex = 14;
@@ -274,9 +275,9 @@
             this.surfCov,
             this.RxyDisp,
             this.RzDisp});
-            this.dgvData.Location = new System.Drawing.Point(626, 19);
+            this.dgvData.Location = new System.Drawing.Point(534, 124);
             this.dgvData.Name = "dgvData";
-            this.dgvData.Size = new System.Drawing.Size(544, 352);
+            this.dgvData.Size = new System.Drawing.Size(619, 352);
             this.dgvData.TabIndex = 17;
             // 
             // MolType
@@ -316,7 +317,7 @@
             // 
             // btnClearTable
             // 
-            this.btnClearTable.Location = new System.Drawing.Point(241, 360);
+            this.btnClearTable.Location = new System.Drawing.Point(241, 428);
             this.btnClearTable.Name = "btnClearTable";
             this.btnClearTable.Size = new System.Drawing.Size(109, 25);
             this.btnClearTable.TabIndex = 18;
@@ -336,7 +337,7 @@
             // 
             // btnStart1
             // 
-            this.btnStart1.Location = new System.Drawing.Point(216, 326);
+            this.btnStart1.Location = new System.Drawing.Point(216, 394);
             this.btnStart1.Name = "btnStart1";
             this.btnStart1.Size = new System.Drawing.Size(153, 23);
             this.btnStart1.TabIndex = 20;
@@ -423,7 +424,6 @@
             this.tbStep.TabIndex = 30;
             this.tbStep.Text = "0,42";
             this.tbStep.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.tbStep.UseWaitCursor = true;
             // 
             // label10
             // 
@@ -450,7 +450,6 @@
             this.tbDensCentre.Size = new System.Drawing.Size(48, 20);
             this.tbDensCentre.TabIndex = 33;
             this.tbDensCentre.Text = "0,42";
-            this.tbDensCentre.UseWaitCursor = true;
             // 
             // label12
             // 
@@ -479,7 +478,7 @@
             // 
             // tbDens2
             // 
-            this.tbDens2.Location = new System.Drawing.Point(375, 134);
+            this.tbDens2.Location = new System.Drawing.Point(368, 134);
             this.tbDens2.Name = "tbDens2";
             this.tbDens2.Size = new System.Drawing.Size(40, 20);
             this.tbDens2.TabIndex = 37;
@@ -491,12 +490,13 @@
             this.tcGeneral.Location = new System.Drawing.Point(2, 1);
             this.tcGeneral.Name = "tcGeneral";
             this.tcGeneral.SelectedIndex = 0;
-            this.tcGeneral.Size = new System.Drawing.Size(1185, 425);
+            this.tcGeneral.Size = new System.Drawing.Size(1185, 514);
             this.tcGeneral.TabIndex = 38;
             // 
             // tpMonolayers
             // 
             this.tpMonolayers.BackColor = System.Drawing.SystemColors.Control;
+            this.tpMonolayers.Controls.Add(this.checkUpperBottomCut);
             this.tpMonolayers.Controls.Add(this.checkInterfaceCut);
             this.tpMonolayers.Controls.Add(this.tbYOrientationalOrderTypeB);
             this.tpMonolayers.Controls.Add(this.tbYOrientationalOrderTypeA);
@@ -542,9 +542,19 @@
             this.tpMonolayers.Location = new System.Drawing.Point(4, 22);
             this.tpMonolayers.Name = "tpMonolayers";
             this.tpMonolayers.Padding = new System.Windows.Forms.Padding(3);
-            this.tpMonolayers.Size = new System.Drawing.Size(1177, 399);
+            this.tpMonolayers.Size = new System.Drawing.Size(1177, 488);
             this.tpMonolayers.TabIndex = 0;
             this.tpMonolayers.Text = "Монослои";
+            // 
+            // checkInterfaceCut
+            // 
+            this.checkInterfaceCut.AutoSize = true;
+            this.checkInterfaceCut.Location = new System.Drawing.Point(417, 78);
+            this.checkInterfaceCut.Name = "checkInterfaceCut";
+            this.checkInterfaceCut.Size = new System.Drawing.Size(226, 17);
+            this.checkInterfaceCut.TabIndex = 47;
+            this.checkInterfaceCut.Text = "Считать плотность приграничного слоя";
+            this.checkInterfaceCut.UseVisualStyleBackColor = true;
             // 
             // tbYOrientationalOrderTypeB
             // 
@@ -565,18 +575,18 @@
             this.lblOrientationalOrderTypeB.AutoSize = true;
             this.lblOrientationalOrderTypeB.Location = new System.Drawing.Point(414, 262);
             this.lblOrientationalOrderTypeB.Name = "lblOrientationalOrderTypeB";
-            this.lblOrientationalOrderTypeB.Size = new System.Drawing.Size(63, 13);
+            this.lblOrientationalOrderTypeB.Size = new System.Drawing.Size(67, 13);
             this.lblOrientationalOrderTypeB.TabIndex = 43;
-            this.lblOrientationalOrderTypeB.Text = "X,Y - type B";
+            this.lblOrientationalOrderTypeB.Text = "X,Y - блок B";
             // 
             // lblOrientationalOrderTypeA
             // 
             this.lblOrientationalOrderTypeA.AutoSize = true;
             this.lblOrientationalOrderTypeA.Location = new System.Drawing.Point(414, 236);
             this.lblOrientationalOrderTypeA.Name = "lblOrientationalOrderTypeA";
-            this.lblOrientationalOrderTypeA.Size = new System.Drawing.Size(63, 13);
+            this.lblOrientationalOrderTypeA.Size = new System.Drawing.Size(67, 13);
             this.lblOrientationalOrderTypeA.TabIndex = 42;
-            this.lblOrientationalOrderTypeA.Text = "X,Y - type A";
+            this.lblOrientationalOrderTypeA.Text = "X,Y - блок A";
             // 
             // tbXOrientationalOrderTypeB
             // 
@@ -605,7 +615,7 @@
             // checkAxOrientationalParameter
             // 
             this.checkAxOrientationalParameter.AutoSize = true;
-            this.checkAxOrientationalParameter.Location = new System.Drawing.Point(24, 247);
+            this.checkAxOrientationalParameter.Location = new System.Drawing.Point(24, 244);
             this.checkAxOrientationalParameter.Name = "checkAxOrientationalParameter";
             this.checkAxOrientationalParameter.Size = new System.Drawing.Size(232, 17);
             this.checkAxOrientationalParameter.TabIndex = 38;
@@ -625,7 +635,7 @@
             this.tpageRecolor.Location = new System.Drawing.Point(4, 22);
             this.tpageRecolor.Name = "tpageRecolor";
             this.tpageRecolor.Padding = new System.Windows.Forms.Padding(3);
-            this.tpageRecolor.Size = new System.Drawing.Size(1136, 399);
+            this.tpageRecolor.Size = new System.Drawing.Size(1177, 488);
             this.tpageRecolor.TabIndex = 1;
             this.tpageRecolor.Text = "Перекраска";
             // 
@@ -701,15 +711,15 @@
             // 
             this.openFileDialog.FileName = "openFileDialog";
             // 
-            // checkInterfaceCut
+            // checkUpperBottomCut
             // 
-            this.checkInterfaceCut.AutoSize = true;
-            this.checkInterfaceCut.Location = new System.Drawing.Point(396, 78);
-            this.checkInterfaceCut.Name = "checkInterfaceCut";
-            this.checkInterfaceCut.Size = new System.Drawing.Size(226, 17);
-            this.checkInterfaceCut.TabIndex = 47;
-            this.checkInterfaceCut.Text = "Считать плотность приграничного слоя";
-            this.checkInterfaceCut.UseVisualStyleBackColor = true;
+            this.checkUpperBottomCut.AutoSize = true;
+            this.checkUpperBottomCut.Location = new System.Drawing.Point(417, 101);
+            this.checkUpperBottomCut.Name = "checkUpperBottomCut";
+            this.checkUpperBottomCut.Size = new System.Drawing.Size(281, 17);
+            this.checkUpperBottomCut.TabIndex = 48;
+            this.checkUpperBottomCut.Text = "Для полых: вырезать гели выше/ниже межфазки";
+            this.checkUpperBottomCut.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -805,6 +815,7 @@
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeB;
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeA;
         private System.Windows.Forms.CheckBox checkInterfaceCut;
+        private System.Windows.Forms.CheckBox checkUpperBottomCut;
     }
 }
 
