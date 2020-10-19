@@ -1,3 +1,3 @@
 # GelAnalyzer
 
-Simple program for some polymer recalculations.
+Simple program for some polymer calculations.

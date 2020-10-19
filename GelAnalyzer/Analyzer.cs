@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 namespace GelAnalyzer
@@ -244,6 +245,36 @@ namespace GelAnalyzer
         }
 
         #endregion
+
+
+        public static double GetAngle(double x1, double x2, double y1, double y2, double z1, double z2) //angle between 2 beads
+        {
+            double CosAngle = (x1 * x2 + y1 * y2 + z1 * z2) / (Math.Sqrt(x1 * x1 + y1 * y1 + z1 * z1) * Math.Sqrt(x2 * x2 + y2 * y2 + z2 * z2));
+
+            return Math.Acos(CosAngle);
+        }
+        public static double GetXYPlaneAngle(double x1, double x2, double y1, double y2) //plane (in XY) angle between 2 beads
+        {
+            double CosAngle = (x1 * x2 + y1 * y2) / (Math.Sqrt(x1 * x1 + y1 * y1) * Math.Sqrt(x2 * x2 + y2 * y2));
+
+            return Math.Acos(CosAngle);
+        }
+
+
+        public static double GetAverageOfElementFromCollection(List<double[]> Collection, int CollectionSize, int NumberOfElementToAverageInCollection)
+        {
+            double sum=0;
+            double meantvalue=0;
+            
+            for(int i=0; i < CollectionSize; i++)
+            {
+                sum += Collection[i][NumberOfElementToAverageInCollection];
+            }
+            meantvalue = Math.Round(sum / CollectionSize, 2);
+
+            return meantvalue;
+        }
+
 
         public static double GetDistance(double x1, double x2, double y1, double y2, double z1, double z2) //calculate distance between 2 beads
         {
