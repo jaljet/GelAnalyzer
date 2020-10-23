@@ -313,13 +313,21 @@ namespace GelAnalyzer
                     List<double[]> centermass = new List<double[]>();
                     List<double[]> centers = new List<double[]>(); //центры масс гелей не у стенки
                     List<double> cXY = new List<double>(); //Rxy гелей не у стенки
+                    List<double[]> cylinders = new List<double[]>(); //частицы гелей не у стенки
 
                     List<double[]> hollowUpCentersmass = new List<double[]>(); //центры масс гелей, полость которых ориентирована вверх 
                     List<double[]> hollowDownCentersmass = new List<double[]>(); //центры масс гелей, полость которых ориентирована вниз
                     List<double> hollowUpRxy = new List<double>(); //Rxy гелей с полостью вверх
                     List<double> hollowDownRxy = new List<double>(); //Rxy гелей с полостью вниз
+                    List<double[]> Uphollows = new List<double[]>(); //частицы всех гелей с полостью вверх
+                    List<double[]> Downhollows = new List<double[]>();//частицы всех гелей с полостью вниз
 
+                    //очищаем коллекции, в которые вырезаем частицы, чтобы избежать перезаписи в снэпшотах и избыточного использования памяти 
+                    cylinders.Clear();
                     cylmol.Clear();
+
+                    Uphollows.Clear();
+                    Downhollows.Clear();
                     UpperHollowmol.Clear();
                     DownHollowmol.Clear();
 
@@ -336,11 +344,9 @@ namespace GelAnalyzer
                         Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
 
 
-                        
-
                         if (docentercut)
                         {
-                            #region вырезание центральных в монослое гелей в отдельный снэпшот
+                            #region work with one gel для проверки расположения не у стенки
 
                             //work with one gel для проверки расположения не у стенки
                             var Yrad = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 1));
@@ -355,20 +361,20 @@ namespace GelAnalyzer
                                 cXY.Add(XY[j]);
                             }
 
-                            // отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
-                            List<double[]> cylinders = new List<double[]>();
-                            for (int k = 0; k < centers.Count; k++)
-                            {
+                            //// отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
 
-                                cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
-                                                                    <= 0.33 * cXY[k]).ToList());
-                            }
+                            //for (int k = 0; k < centers.Count; k++)
+                            //{
 
-                            cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                                , 0, 0, 0, cylinders);
+                            //    cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
+                            //                                        <= 0.33 * cXY[k]).ToList());
+                            //}
 
-                            FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
-                                                     1, sizes, 3, cylmol);
+                            //cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                            //    , 0, 0, 0, cylinders);
+
+                            //FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
+                            //                         1, sizes, 3, cylmol);
 
                             #endregion
                         }
@@ -444,12 +450,12 @@ namespace GelAnalyzer
                             meantAngle = sumAngle / gelYAnglesTypeB.Count;
                             YOrientationalOrderTypeB[j] = 0.5 * meantAngle;
                             sumAngle = 0; meantAngle = 0;
-                             #endregion
+                            #endregion
                         }
 
                         if (dohollowuppercut)
                         {
-                            #region вырезаем в отдельный снэпшот полые гели с полостью вверх и полые гели с полостью вниз
+                            #region отбираем центры масс полых гелей, оказавшихся выше межфазной границы, затем у тех, кто ниже
 
                             //отбираем центры масс полых гелей, оказавшихся выше межфазной границы, затем у тех, кто ниже
                             //centre положение межфазки по Z-axis
@@ -461,50 +467,109 @@ namespace GelAnalyzer
                                     counter++;
                                 }
                             }
-                            if (counter / numberN <= 0.4)
+                            if (counter / numberN <= 0.45)
                             {
                                 hollowUpCentersmass.Add(StructFormer.GetCenterMass(mol));
                                 hollowUpRxy.Add(XY[j]);
                             }
                             else
-                                if (counter / numberN >= 0.6)
+                            // if (counter / numberN >= 0.6)
                             {
                                 hollowDownCentersmass.Add(StructFormer.GetCenterMass(mol));
                                 hollowDownRxy.Add(XY[j]);
                             }
 
-                            //отбираем все частицы в радиусе 1/2 Rxy от центров масс отобранных раннее полых гелей из тех, что выше/ниже 
-                            List<double[]> Uphollows = new List<double[]>();
-                            List<double[]> Downhollows = new List<double[]>();
-                            for (int k = 0; k < hollowUpCentersmass.Count; k++)
-                            {
+                            ////отбираем все частицы в радиусе 1/2 Rxy от центров масс отобранных раннее полых гелей из тех, что выше/ниже 
+                            ////List<double[]> Uphollows = new List<double[]>();
+                            ////List<double[]> Downhollows = new List<double[]>();
+                            //for (int k = 0; k < hollowUpCentersmass.Count; k++)
+                            //{
 
-                                Uphollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowUpCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
-                                                                    <= 0.5 * hollowUpRxy[k]).ToList());
-                            }
+                            //    Uphollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowUpCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
+                            //                                        <= 0.33 * hollowUpRxy[k]).ToList());
+                            //}
 
-                            UpperHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                                , 0, 0, 0, Uphollows);
+                            ////UpperHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                            ////    , 0, 0, 0, Uphollows);
 
-                            for (int k = 0; k < hollowDownCentersmass.Count; k++)
-                            {
+                            //for (int k = 0; k < hollowDownCentersmass.Count; k++)
+                            //{
 
-                                Downhollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowDownCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
-                                                                    <= 0.5 * hollowDownRxy[k]).ToList());
-                            }
+                            //    Downhollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowDownCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
+                            //                                        <= 0.33 * hollowDownRxy[k]).ToList());
+                            //}
 
-                            DownHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                                , 0, 0, 0, Uphollows);
+                            //DownHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                            //    , 0, 0, 0, Uphollows);
 
-                            FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowup" + (i + 1).ToString() + ".lammpstrj",
-                                                     1, sizes, 3, UpperHollowmol);
+                            //FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowup" + (i + 1).ToString() + ".lammpstrj",
+                            //                         1, sizes, 3, UpperHollowmol);
 
-                            FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowdown" + (i + 1).ToString() + ".lammpstrj",
-                                                     1, sizes, 3, DownHollowmol);
+                            //FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowdown" + (i + 1).ToString() + ".lammpstrj",
+                            //                         1, sizes, 3, DownHollowmol);
 
                             #endregion
                         }
 
+                    }
+
+                    if (docentercut)
+                    {
+                        #region вырезание центральных в монослое гелей в отдельный снэпшот
+                        // отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
+
+                        for (int k = 0; k < centers.Count; k++)
+                        {
+
+                            cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
+                                                                <= 0.33 * cXY[k]).ToList());
+                        }
+
+
+                        cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                , 0, 0, 0, cylinders);
+
+                        FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
+                                                 1, sizes, 3, cylmol);
+                        #endregion
+                    }
+
+                    if (dohollowuppercut)
+                    {
+                        #region вырезаем в отдельный снэпшот полые гели с полостью вверх и полые гели с полостью вниз
+
+                        //отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее полых гелей из тех, что выше/ниже 
+
+                        for (int k = 0; k < hollowUpCentersmass.Count; k++)
+                        {
+
+                            Uphollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowUpCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
+                                                                <= 0.33 * hollowUpRxy[k]).ToList());
+                        }
+
+
+
+                        for (int k = 0; k < hollowDownCentersmass.Count; k++)
+                        {
+
+                            Downhollows.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - hollowDownCentersmass[k][0]), 2) + Math.Pow(Math.Abs(x[1] - hollowUpCentersmass[k][1]), 2))
+                                                                <= 0.33 * hollowDownRxy[k]).ToList());
+                        }
+
+
+                        UpperHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                , 0, 0, 0, Uphollows);
+
+                        DownHollowmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                , 0, 0, 0, Uphollows);
+
+                        FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowup" + (i + 1).ToString() + ".lammpstrj",
+                                                         1, sizes, 3, UpperHollowmol);
+
+                        FileWorker.SaveLammpstrj(false, tbPath.Text + "//hollowdown" + (i + 1).ToString() + ".lammpstrj",
+                                                 1, sizes, 3, DownHollowmol);
+
+                        #endregion
                     }
 
                     /*  #region вычисление радиусов гелей по ансамблю и среднекв. отклонений в плоскости XY и в проекции на ось Z
