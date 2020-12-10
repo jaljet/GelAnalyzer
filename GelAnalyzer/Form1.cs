@@ -300,6 +300,8 @@ namespace GelAnalyzer
             var UpperHollowmol = new List<MolData>(); //полые гели с полостью над межфазной границей 
             var DownHollowmol = new List<MolData>(); //полые гели с полостью над межфазной границей 
 
+            var BrushWithColoredEnds = new List<MolData>(); //перекрашиваемая щётка
+
             var sizes = new double[3]; //размеры ящика моделирования
 
             for (int i = 0; i < files.Length; i++)
@@ -321,6 +323,9 @@ namespace GelAnalyzer
                     List<double> hollowDownRxy = new List<double>(); //Rxy гелей с полостью вниз
                     List<double[]> Uphollows = new List<double[]>(); //частицы всех гелей с полостью вверх
                     List<double[]> Downhollows = new List<double[]>();//частицы всех гелей с полостью вниз
+
+                    List<double[]> BrushColoredEnds = new List<double[]>(); // частицы перекрашенной щётки
+
 
                     //очищаем коллекции, в которые вырезаем частицы, чтобы избежать перезаписи в снэпшотах и избыточного использования памяти 
                     cylinders.Clear();
@@ -369,8 +374,19 @@ namespace GelAnalyzer
                         {
                             #region вычисление ориентационного параметра порядка для одного геля
 
+                            List<double[]> inputMg = new List<double[]>();
+                            List<int[]> mgBonds = new List<int[]>();
+                            List<int[]> mgAngles = new List<int[]>();
+                            FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
+                            var bonds = (List<int[]>)args[1];
+                            var mGel = MolData.ConvertToMolData(mol, true, bonds);
+                            
                             double XCosAngle = 0;
                             double YCosAngle = 0;
+
+                            var Molindex = 2;
+                            // MolIndex = 2 means that this bead has been visited
+                            var crossLinkers = Analyzer.GetCrossLinkers(mGel);
 
                             for (int m = 0; m < numberN; m++)
                             {
@@ -466,6 +482,26 @@ namespace GelAnalyzer
 
                             #endregion
                         }
+                        /*
+                        #region красим концы щётки в тип 1
+                        int end = 253;
+
+                        for (int p = 0; p < numberN; p++)
+                        {
+                            if (mol[p][4] == end)
+                            {
+                                mol[p][3] = 1;
+                                end += 15;
+                            }
+                        }
+                        BrushColoredEnds.AddRange(mol);
+
+                        BrushWithColoredEnds = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                    , 0, 0, 0, BrushColoredEnds);
+
+
+                        #endregion
+                        */
 
                     }
 
@@ -489,6 +525,13 @@ namespace GelAnalyzer
                                                  1, sizes, 3, cylmol);
                         #endregion
                     }
+
+                    //сохраняем щётку
+                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//brush" + (i + 1).ToString() + ".lammpstrj",
+                                                                 1, sizes, 3, BrushWithColoredEnds);
+
+
+
 
                     if (dohollowuppercut)
                     {

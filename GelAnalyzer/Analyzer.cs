@@ -501,7 +501,7 @@ namespace GelAnalyzer
                 }
         }
 
-        private static List<MolData> GetCrossLinkers(List<MolData> mgel)
+        public static List<MolData> GetCrossLinkers(List<MolData> mgel)
         {
             var cLinkers = new List<MolData>();
 
