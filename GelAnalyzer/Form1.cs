@@ -790,7 +790,7 @@ namespace GelAnalyzer
                     
                     double meantradXY, meantradZ, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
                     double sum = 0;
-                    /*for (int k = 0; k < XY.Length; k++)
+                    for (int k = 0; k < XY.Length; k++)
                     {
                         sum += XY[k];
                     }
@@ -818,7 +818,7 @@ namespace GelAnalyzer
                     }
                     sqradZ = Math.Sqrt(sum / (Z.Length - 1)); sum = 0;
                     res[3] = Math.Round(sqradZ, 2);
-                    */
+                    
                     for (int k = 0; k < poldens.Length; k++)
                     {
                         sum += Math.Pow((poldens[k]), 2);
