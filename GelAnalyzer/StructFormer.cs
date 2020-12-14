@@ -120,7 +120,7 @@ namespace GelAnalyzer
         /// <summary>
         /// Определение диаметра вдоль оси
         /// </summary>
-        private static double GetAxDiameter(List<double[]> data, int axNum)
+        public static double GetAxDiameter(List<double[]> data, int axNum)
         {
             var polymer = data.Where(x => x[3] == 1.00 ||
                                           x[3] == 1.01).ToList();
