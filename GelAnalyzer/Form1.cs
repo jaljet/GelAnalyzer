@@ -278,7 +278,7 @@ namespace GelAnalyzer
 
             //для щёток
             List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам
-            double[] SideChainXY = new double[239]; //задаётся числом боковых цепей
+            List<double> SideChainXY = new List<double>(); //задаётся числом боковых цепей
             List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам
             
 
@@ -337,11 +337,15 @@ namespace GelAnalyzer
                     //очищаем коллекции, в которые вырезаем частицы, чтобы избежать перезаписи в снэпшотах и избыточного использования памяти 
                     cylinders.Clear();
                     cylmol.Clear();
-
                     Uphollows.Clear();
                     Downhollows.Clear();
                     UpperHollowmol.Clear();
                     DownHollowmol.Clear();
+
+
+                    int backbonecounter1 = 0;
+                    int backbonecounter2 = 238;
+                    int sideEnd1 = 253;
 
                     //переход к одиночной молекуле
                     for (int j = 0; j < molAmount; j++)
@@ -352,54 +356,44 @@ namespace GelAnalyzer
 
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
                         Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
-                        //centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
-
-
                         
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
                         /*
-                        int backbonecounter1 = 0;
-                        int backbonecounter2 = 238;
-                        int sidecounter1 = 253; 
-                        int sidecounter2 = 268;
+                        //int backbonecounter1 = 0;
+                        //int backbonecounter2 = 238;
+                        //int sideEnd1 = 253; 
+                        
                             
                         if((StructFormer.GetAxDiameter(mol,0)>= 88) || (StructFormer.GetAxDiameter(mol, 1) >= 88) || (StructFormer.GetAxDiameter(mol, 2)>= 88))
                                 {
-                            backbonecounter1 += 3824;
-                            backbonecounter2 += 3824;
-                            sidecounter1 += 3824;
-                            sidecounter2 += 3824;
+                            //backbonecounter1 += 3824;
+                           //backbonecounter2 += 3824;
+                            //sideEnd1 += 3824;
+                            
                             continue;
                                 }
 
                         BackBoneXY.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
                             mol[backbonecounter2][1], mol[backbonecounter1][2], mol[backbonecounter2][2]));
-                        backbonecounter1 += 3824;
-                        backbonecounter2 += 3824;
+                        //backbonecounter1 += 3824;
+                        //backbonecounter2 += 3824;
 
 
-                        for (int q = 0; q < 239; q++)
+
+                        //for (sideEnd1 = 253 + j*numberN; sideEnd1 < numberN + j*numberN - 15; sideEnd1 += 15)
+                        //{
+                        //        SideChainXY.Add(Analyzer.GetDistance(mol[sideEnd1][0], mol[sideEnd1 + 15][0], mol[sideEnd1][1],
+                        //    mol[sideEnd1 + 15][1], mol[sideEnd1][2], mol[sideEnd1 + 15][2]));
+                        //}
+
+                        for (int b = sideEnd1; b < numberN - 15; b += 15)
                         {
-                            for (int p = 253; p < numberN; p += 30)
-                            {
-                                SideChainXY[q] = Analyzer.GetDistance(mol[sidecounter1][0], mol[sidecounter1 + 30][0], mol[sidecounter1][1],
-                            mol[sidecounter1 + 30][1], mol[sidecounter1][2], mol[sidecounter1 + 30][2]);
-                            }
+                            SideChainXY.Add(Analyzer.GetDistance(mol[b][0], mol[b + 15][0], mol[b][1],
+                        mol[b + 15][1], mol[b][2], mol[b + 15][2]));
                         }
-                        sidecounter1 += 3824;
 
-                        for (int q = 0; q < 239; q++)
-                        {
-                            for (int k = 268; k < numberN; k += 30)
-                            {
-                                SideChainXY[q] = Analyzer.GetDistance(mol[sidecounter2][0], mol[sidecounter2 + 30][0], mol[sidecounter2][1],
-                                mol[sidecounter2 + 30][1], mol[sidecounter2][2], mol[sidecounter2 + 30][2]);
-                            }
-                        }
-                        sidecounter2 += 3824;
-
-
+                        //sideEnd1 += 3824;
                         BrushSideChainXY.Add(SideChainXY.Average()); 
                         */
                         #endregion
@@ -742,7 +736,9 @@ namespace GelAnalyzer
                     }
 
                     #region средние радиусы с погрешностями и плотности в слое по ансамблю
-                    /*double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
+                    //для обработки размеров щёток
+                    /*
+                    double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
                     double brushsum = 0;
                     int check = 0;
                     for(int k=0; k<BackBoneXY.Count; k++)   
