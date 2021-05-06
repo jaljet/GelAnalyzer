@@ -117,6 +117,19 @@ namespace GelAnalyzer
 
             return diameters;
         }
+
+
+        public static double[] GetDiameter(List<MolData> data)
+        {
+            double[] diameters = new double[]
+            {GetAxDiameter(data, 0),
+            GetAxDiameter(data, 1),
+            GetAxDiameter(data, 2)
+            };
+
+            return diameters;
+        }
+
         /// <summary>
         /// Определение диаметра вдоль оси
         /// </summary>
@@ -131,6 +144,37 @@ namespace GelAnalyzer
             }
 
             double diam = polymer.Max(x => x[axNum]) - polymer.Min(x => x[axNum]);
+
+            if (diam == 0) { diam = 0.5; }
+
+            return diam;
+        }
+
+
+        public static double GetAxDiameter(List<MolData> data, int axNum)
+        {
+            var polymer = data.Where(x => x.AtomType == 1.00 ||
+                                          x.AtomType == 1.01).ToList();
+            if (polymer.Count == 0)
+            {
+                polymer = data.Where(x => x.AtomType == 1.02 ||
+                                          x.AtomType == 1.04).ToList();
+            }
+
+            double diam = 0.0; 
+            if (axNum == 0)
+            {
+                diam = polymer.Max(x => x.XCoord) - polymer.Min(x => x.XCoord);
+            }
+            if (axNum == 1)
+            {
+                diam = polymer.Max(x => x.YCoord) - polymer.Min(x => x.YCoord);
+            }
+            if (axNum == 2)
+            {
+                diam = polymer.Max(x => x.ZCoord) - polymer.Min(x => x.ZCoord);
+            }
+
 
             if (diam == 0) { diam = 0.5; }
 
@@ -157,6 +201,17 @@ namespace GelAnalyzer
 
         #region CenterAxisType_2
         // Centering procedure based on the PBC 
+
+        public static double CenterAxis_Type2(bool fullNorm, int axInd, double axSize, double axPoint, List<MolData> data)
+        {
+            var data_double = new List<double[]>();
+            foreach (var c in data)
+            {
+                data_double.Add(new double[] { c.XCoord, c.YCoord, c.ZCoord });
+            }
+            return CenterAxis_Type2(fullNorm, axInd, axSize, axPoint, data_double);
+        }
+
         public static double CenterAxis_Type2(bool fullNorm, int axInd, double axSize, double axPoint, List<double[]> data)
         {
             var mol = data.Where(x => x[3] == 1.00 || x[3] == 1.01 || x[3] == 1.04).ToList();
@@ -301,7 +356,39 @@ namespace GelAnalyzer
             return centerPoint;
         }
 
+        public static double[] GetCenterPoint(double[] sizes, List<MolData> data)
+        {
+            double[] centerPoint = new double[] { sizes[0] / 2.0, sizes[1] / 2.0, sizes[2] / 2.0 };
+
+            
+                if (data.Any(x => x.XCoord < -1.0))
+                {
+                    centerPoint[0] = 0.0;
+                }
+            if (data.Any(x => x.YCoord < -1.0))
+            {
+                centerPoint[1] = 0.0;
+            }
+            if (data.Any(x => x.ZCoord < -1.0))
+            {
+                centerPoint[2] = 0.0;
+            }
+            return centerPoint;
+        }
+
+
         public static double[] CenterStructure(double[] centerPoint, List<double[]> data)
+        {
+            var cMass = GetCenterMass(data);
+
+            for (int i = 0; i <= 2; i++)
+            {
+                cMass[i] = Math.Round(centerPoint[i] - cMass[i], 2);
+            }
+            return cMass;
+        }
+
+        public static double[] CenterStructure(double[] centerPoint, List<MolData> data)
         {
             var cMass = GetCenterMass(data);
 

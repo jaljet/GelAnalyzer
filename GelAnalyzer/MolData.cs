@@ -256,10 +256,10 @@ namespace GelAnalyzer
         }
         #endregion
 
-        
+
 
         #region ShiftAllDouble new
-        public static void ShiftAllDouble(int density, double[] sizes,double[] shifts,double[] centerPoint,List<double[]> data)
+        public static void ShiftAllDouble(int density, double[] sizes, double[] shifts, double[] centerPoint, List<double[]> data)
         {
             // 0 Этап - смещение (если есть) всех частиц по координате 
 
@@ -275,6 +275,33 @@ namespace GelAnalyzer
                     if (data[i][j] >= (centerPoint[j] + sizes[j] / 2.0)) { data[i][j] -= sizes[j]; }
                 }
             }
+
+        }
+
+
+        public static void ShiftAll(int density, double[] sizes, double[] shifts, double[] centerPoint, List<MolData> data)
+        {
+            // 0 Этап - смещение (если есть) всех частиц по координате 
+
+            int maxnum = (int)(sizes[0] * sizes[1] * sizes[2] * density);
+
+            for (int i = 0; i < Math.Min(data.Count, maxnum); i++)
+            {
+
+                data[i].XCoord += shifts[0];
+                data[i].YCoord += shifts[1];
+                data[i].ZCoord += shifts[2];
+
+                if (data[i].XCoord <= (centerPoint[0] - sizes[0] / 2.0)) { data[i].XCoord += sizes[0]; }
+                if (data[i].XCoord >= (centerPoint[0] + sizes[0] / 2.0)) { data[i].XCoord -= sizes[0]; }
+
+                if (data[i].YCoord <= (centerPoint[1] - sizes[1] / 2.0)) { data[i].YCoord += sizes[1]; }
+                if (data[i].YCoord >= (centerPoint[1] + sizes[1] / 2.0)) { data[i].YCoord -= sizes[1]; }
+
+                if (data[i].ZCoord <= (centerPoint[2] - sizes[2] / 2.0)) { data[i].ZCoord += sizes[2]; }
+                if (data[i].ZCoord >= (centerPoint[2] + sizes[2] / 2.0)) { data[i].ZCoord -= sizes[2]; }
+            }
+            
 
         }
         #endregion
@@ -311,8 +338,8 @@ namespace GelAnalyzer
             if (withBonds)
             {
                 foreach (var c in system)
-                {
-                    var beadBonds = new List<int>();
+                {   
+                        var beadBonds = new List<int>();
                     foreach (var p in bonds)
                     {
                         if (p[0] == c.Index)
@@ -326,7 +353,7 @@ namespace GelAnalyzer
                     }
 
                     c.Bonds = beadBonds;
-                }
+                    }
             }
 
             return system;

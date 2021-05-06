@@ -78,6 +78,7 @@
             this.tbDens2 = new System.Windows.Forms.TextBox();
             this.tcGeneral = new System.Windows.Forms.TabControl();
             this.tpMonolayers = new System.Windows.Forms.TabPage();
+            this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
             this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
             this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
             this.tbYOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
@@ -88,6 +89,7 @@
             this.checkCenterCut = new System.Windows.Forms.CheckBox();
             this.checkAxOrientationalParameter = new System.Windows.Forms.CheckBox();
             this.tpageRecolor = new System.Windows.Forms.TabPage();
+            this.button_S_Parameter = new System.Windows.Forms.Button();
             this.label15 = new System.Windows.Forms.Label();
             this.tbSubchainLength = new System.Windows.Forms.TextBox();
             this.btnChooseMgel = new System.Windows.Forms.Button();
@@ -97,7 +99,6 @@
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -546,6 +547,16 @@
             this.tpMonolayers.TabIndex = 0;
             this.tpMonolayers.Text = "Монослои";
             // 
+            // checkUpperBottomCut
+            // 
+            this.checkUpperBottomCut.AutoSize = true;
+            this.checkUpperBottomCut.Location = new System.Drawing.Point(417, 101);
+            this.checkUpperBottomCut.Name = "checkUpperBottomCut";
+            this.checkUpperBottomCut.Size = new System.Drawing.Size(281, 17);
+            this.checkUpperBottomCut.TabIndex = 48;
+            this.checkUpperBottomCut.Text = "Для полых: вырезать гели выше/ниже межфазки";
+            this.checkUpperBottomCut.UseVisualStyleBackColor = true;
+            // 
             // checkInterfaceCut
             // 
             this.checkInterfaceCut.AutoSize = true;
@@ -625,6 +636,7 @@
             // tpageRecolor
             // 
             this.tpageRecolor.BackColor = System.Drawing.SystemColors.Control;
+            this.tpageRecolor.Controls.Add(this.button_S_Parameter);
             this.tpageRecolor.Controls.Add(this.label15);
             this.tpageRecolor.Controls.Add(this.tbSubchainLength);
             this.tpageRecolor.Controls.Add(this.btnChooseMgel);
@@ -638,6 +650,15 @@
             this.tpageRecolor.Size = new System.Drawing.Size(1177, 488);
             this.tpageRecolor.TabIndex = 1;
             this.tpageRecolor.Text = "Перекраска";
+            // 
+            // button_S_Parameter
+            // 
+            this.button_S_Parameter.Location = new System.Drawing.Point(251, 130);
+            this.button_S_Parameter.Name = "button_S_Parameter";
+            this.button_S_Parameter.Size = new System.Drawing.Size(199, 23);
+            this.button_S_Parameter.TabIndex = 0;
+            this.button_S_Parameter.Text = "S_parameter";
+            this.button_S_Parameter.Click += new System.EventHandler(this.button_S_Parameter_Click);
             // 
             // label15
             // 
@@ -696,7 +717,7 @@
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(153, 23);
             this.button4.TabIndex = 26;
-            this.button4.Text = "Пуск";
+            this.button4.Text = "Перекрасить в диблок";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
@@ -710,16 +731,6 @@
             // openFileDialog
             // 
             this.openFileDialog.FileName = "openFileDialog";
-            // 
-            // checkUpperBottomCut
-            // 
-            this.checkUpperBottomCut.AutoSize = true;
-            this.checkUpperBottomCut.Location = new System.Drawing.Point(417, 101);
-            this.checkUpperBottomCut.Name = "checkUpperBottomCut";
-            this.checkUpperBottomCut.Size = new System.Drawing.Size(281, 17);
-            this.checkUpperBottomCut.TabIndex = 48;
-            this.checkUpperBottomCut.Text = "Для полых: вырезать гели выше/ниже межфазки";
-            this.checkUpperBottomCut.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -816,6 +827,7 @@
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeA;
         private System.Windows.Forms.CheckBox checkInterfaceCut;
         private System.Windows.Forms.CheckBox checkUpperBottomCut;
+        private System.Windows.Forms.Button button_S_Parameter;
     }
 }
 

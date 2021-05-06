@@ -277,10 +277,10 @@ namespace GelAnalyzer
 
 
             //для щёток
-            List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам
-            List<double> SideChainXY = new List<double>(); //задаётся числом боковых цепей
-            List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам
-            
+            List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам - длина бэкбона (?)
+            List<double> SideChainXY = new List<double>(); //задаётся числом боковых цепей - расстояния от бэкбона до конца боковой цепи по одной щётке
+            List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам - расстояния от бэкбона до конца боковой цепи по всем
+
 
 
             double[] XY = new double[molAmount];
@@ -359,7 +359,7 @@ namespace GelAnalyzer
                         
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
-                        /*
+                        
                         //int backbonecounter1 = 0;
                         //int backbonecounter2 = 238;
                         //int sideEnd1 = 253; 
@@ -395,7 +395,7 @@ namespace GelAnalyzer
 
                         //sideEnd1 += 3824;
                         BrushSideChainXY.Add(SideChainXY.Average()); 
-                        */
+                        
                         #endregion
                         
                         XY[j] = StructFormer.GetHydroRadius2D(mol);
@@ -737,7 +737,7 @@ namespace GelAnalyzer
 
                     #region средние радиусы с погрешностями и плотности в слое по ансамблю
                     //для обработки размеров щёток
-                    /*
+                   /* double sum = 0;
                     double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
                     double brushsum = 0;
                     int check = 0;
@@ -967,13 +967,17 @@ namespace GelAnalyzer
             var sizes = (double[])args[4];
 
             var mGel = MolData.ConvertToMolData(mol, true, bonds);
-            
+
             // Do the recolor
-            Analyzer.RecolorALL(mGel, subchainLength, colorLength);
+            //Analyzer.RecolorALL(mGel, subchainLength, colorLength);
 
-            var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
+            //var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
 
-            e.Result = new object[] { mGel, sizes, savePath };
+            //e.Result = new object[] { mGel, sizes, savePath };
+
+            double result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
+
+            MessageBox.Show(result.ToString());
         }
 
         #endregion
@@ -995,6 +999,22 @@ namespace GelAnalyzer
             FileWorker.SaveLammpstrj(false, savePath + "//diblocked" + ".lammpstrj",
                                     1, sizes, 0, mGel);
 
+        }
+
+        private void button_S_Parameter_Click(object sender, EventArgs e)
+        {
+            var colorLength = Convert.ToInt32(tbRecolorLength.Text);
+            var subchainLength = Convert.ToInt32(tbSubchainLength.Text);
+
+            List<double[]> inputMg = new List<double[]>();
+            List<int[]> mgBonds = new List<int[]>();
+            List<int[]> mgAngles = new List<int[]>();
+
+            var sizes = new double[] { 0.0, 0.0, 0.0 };
+            FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
+            bgWorkerRecolor.RunWorkerAsync(new object[] { inputMg, mgBonds, colorLength, subchainLength, sizes });
+
+           // MessageBox.Show(result);
         }
     }
 }

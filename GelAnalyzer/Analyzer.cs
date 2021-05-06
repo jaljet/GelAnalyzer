@@ -244,6 +244,65 @@ namespace GelAnalyzer
             }
         }
 
+        public static void DoAutoCenter(bool withZCenter, int k, double[] sizes, double[] centerPoint,
+            List<MolData> file)
+        {
+            if (k == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < k; i++)
+            {
+                double[] centerCoord = StructFormer.CenterStructure(centerPoint, file);
+
+                if (Math.Abs(centerCoord[0]) < 0.5 && Math.Abs(centerCoord[1]) < 0.5 && Math.Abs(centerCoord[2]) < 0.5)
+                {
+                    break;
+                }
+
+                int breakmark = 0;
+
+                if (!withZCenter)
+                {
+                    centerCoord[2] = 0.0;
+                }
+
+                MolData.ShiftAll(3, sizes, centerCoord, centerPoint, file);
+
+                double[] diam = StructFormer.GetDiameter(file);
+
+                for (int j = 0; j <= 2; j++)
+                {
+                    if (Math.Abs(diam[j] - sizes[j]) <= 2)
+                    {
+                        var shifts = new double[3];
+                        shifts[j] = -StructFormer.CenterAxis_Type2(false, j, sizes[j], centerPoint[j], file);
+
+                        if (j == 2 && !withZCenter)
+                        {
+                            shifts[j] = 0.0;
+                        }
+                        MolData.ShiftAll(3, sizes, shifts, centerPoint, file);
+                    }
+                    else
+                    {
+                        if (centerCoord[j] < 0.5)
+                        {
+                            breakmark++;
+                        }
+                    }
+                }
+
+                if ((breakmark == 2 && !withZCenter) || (breakmark == 3 && withZCenter))
+                {
+                    break;
+                }
+            }
+        }
+
+
+
         #endregion
 
 
@@ -404,6 +463,134 @@ namespace GelAnalyzer
 
             crossLinkerWalk(basecLinker, colorLength, subchainLength, 0, 0, false, mGel);
         }
+
+
+        public static double Calculate_S_Parameter(List<MolData> mGel, int subchainLength, int colorLength)
+        {
+            
+            //C:\Users\obi-v\Desktop\SCIENCE\Diblocks\models\test for parameter\16ksub6-diblocked.txt
+
+
+            List<double[]> centermass = new List<double[]>();//центры масс гелей
+            List<double> gelSx = new List<double>(); //параметры Sx всех гелей
+            List<double> gelSy = new List<double>(); //параметры Sy всех гелей
+
+            //переход к одиночной молекуле
+            for (int j = 0; j < 10; j++) //10 - число МГ в монослое
+            {
+                double[] sizes = new double[] { 220.0, 60.0, 182.0 };
+
+
+                var mol = mGel.Skip(j * 50025).Take(50025).ToList(); //50025 - число частиц в МГ
+
+                var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
+
+                centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
+                Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+
+
+
+                var crossLinkers = GetCrossLinkers(mGel);
+
+                crossLinkers = crossLinkers.Where(x => x.AtomType == 1.00).ToList(); //changing this will allow us to calc S-parameter for block A or B
+
+                //S = 0.5 * < 3 * cos^2 (theta) - 1 > 
+                //theta = angle between OX/OY-axis & subchain director
+
+
+                var SmeanX = 0.0;
+                var SmeanY = 0.0;
+                var sigmaSx = 0.0;
+                var sigmaSy = 0.0;
+                List<double> generalSx = new List<double>(); //все Sx в рамках геля
+                List<double> generalSy = new List<double>(); //все Sy в рамках геля
+
+                var tempAngleX = 0.0;
+                var tempAngleY = 0.0;
+
+                double[] subchaindirector = { 0.0, 0.0 };
+                foreach (var c in crossLinkers)
+                {
+                    for (int i = 0; i < c.Bonds.Count; i++)
+                    {
+                        var chainEnd = getChainEnd(c.Index, c.Bonds[i], c.Index, mGel);
+                        subchaindirector[0] = chainEnd.XCoord - c.XCoord;
+                        subchaindirector[1] = chainEnd.YCoord - c.YCoord;
+                        //tempAngle = Analyzer.GetAngle(c.XCoord, chainEnd.XCoord, c.YCoord, chainEnd.YCoord, c.ZCoord, chainEnd.ZCoord);
+                        tempAngleX = Analyzer.GetXYPlaneAngle(subchaindirector[0], subchaindirector[0], subchaindirector[1], 0);
+                        generalSx.Add(0.5 * (3 * Math.Pow(Math.Cos(tempAngleX), 2) - 1));
+                        tempAngleY = Analyzer.GetXYPlaneAngle(subchaindirector[0], 0, subchaindirector[1], subchaindirector[1]);
+                        generalSy.Add(0.5 * (3 * Math.Pow(Math.Cos(tempAngleY), 2) - 1));
+
+                        tempAngleX = 0.0;
+                        tempAngleY = 0.0;
+                    }
+                }
+
+                foreach (var c in generalSx)    //усредняем по гелю
+                {
+                    SmeanX += c;
+                }
+                SmeanX /= generalSx.Count;
+                gelSx.Add(SmeanX);
+                SmeanX = 0.0;
+
+                foreach (var c in generalSy)
+                {
+                    SmeanY += c;
+                }
+                SmeanY /= generalSy.Count;
+                gelSy.Add(SmeanY);
+                SmeanY = 0.0;
+            }
+
+            var SgeneralX = 0.0;                 //усредняем по ансамблю
+            foreach (var c in gelSx)
+            {
+                SgeneralX += c;
+            }
+            SgeneralX /= gelSx.Count;
+
+            var SgeneralY = 0.0;                 
+            foreach (var c in gelSy)
+            {
+                SgeneralY += c;
+            }
+            SgeneralY /= gelSy.Count;
+
+
+            return Math.Round(SgeneralX, 3);               //must fix it later
+
+
+        }
+
+        private static MolData getChainEnd(int crosslinkerId, int currentBead, int previousBead, List<MolData> mGel)
+        {
+            var bead = mGel[currentBead - 1];
+            var bonds = bead.Bonds;
+
+            {
+                foreach (var c in bead.Bonds)
+                {
+                    if (c != crosslinkerId && c!= previousBead)
+                    {
+                        if (!mGel[c - 1].AtomType.Equals(mGel[crosslinkerId - 1].AtomType))
+                        {
+                            return bead;
+                        }
+                        else
+                        {
+                            return getChainEnd(crosslinkerId, c, currentBead, mGel);
+                        }
+
+                    }
+                    
+                }
+                return bead;
+            }
+            
+        } 
+
 
         private static void crossLinkerWalk(MolData currBead, int colorLength, int subchainLength, 
                                           int colorCounter, int sChainCounter, bool chainRecolored,
