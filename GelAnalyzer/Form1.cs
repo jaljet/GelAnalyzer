@@ -385,10 +385,39 @@ namespace GelAnalyzer
 
 
                         var solver = new EigenvalueDecomposition(gyrTensor, true, true);
-
+ 
                         var eigens = solver.RealEigenvalues;
+                        //некоторые оси могут быть развёрнуты, поэтому нужно смотреть, какие векторы и куда действительно смотрят
+                        var eigenvectors = solver.Eigenvectors;
+                        int indexX = 0;
+                        int indexY = 0;
+                        int indexZ = 0;
+                        for (int k = 0; k < 3; k++)
+                        { 
+                                if (Math.Abs(eigenvectors[0, k]) >= 0.7)
+                                {
+                                    indexX = k;
+                                    break;
+                                }
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            if (Math.Abs(eigenvectors[1, k]) >= 0.7)
+                            {
+                                indexY = k;
+                                break;
+                            }
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            if (Math.Abs(eigenvectors[2, k]) >= 0.7)
+                            {
+                                indexZ = k;
+                                break;
+                            }
+                        }
 
-
+                        
 
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
@@ -440,10 +469,10 @@ namespace GelAnalyzer
                         */
 
                         //new approach
-                        X[j] = Math.Sqrt(eigens[0]/numberN);
-                        Y[j] = Math.Sqrt(eigens[1]/numberN);
-                        Z[j] = Math.Sqrt(eigens[2]/numberN);
-                        XY[j] = Math.Sqrt((eigens[0] / numberN)  + (eigens[1] / numberN));
+                        X[j] = Math.Sqrt(eigens[indexX]/numberN);
+                        Y[j] = Math.Sqrt(eigens[indexY]/numberN);
+                        Z[j] = Math.Sqrt(eigens[indexZ]/numberN);
+                        XY[j] = Math.Sqrt(X[j]*X[j]  + Y[j]*Y[j]);
                         
                         if (docentercut)
                         {
