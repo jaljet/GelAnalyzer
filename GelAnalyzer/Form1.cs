@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Accord.Math.Decompositions;
+
 
 namespace GelAnalyzer
 {
@@ -263,7 +265,7 @@ namespace GelAnalyzer
             bool dohollowuppercut = (bool)args[8]; //делаем вырезку гелей, у которых полость ушла вверх/вниз по мере сжатия
 
             var masscenters = new double[molAmount];
-            var res = new double[11]; // содержит данные об xy радиусе, z радиусе и их среднеквадратичных отклонениях, плотностях в выделенном слое
+            var res = new double[15]; // содержит данные об x/y/xy радиусе, z радиусе и их среднеквадратичных отклонениях, плотностях в выделенном слое
                                       //и параметре порядка для типа А и В в рамках одного снэпшота
 
             List<double[]> GeneralRes = new List<double[]>();
@@ -272,17 +274,19 @@ namespace GelAnalyzer
             int molCount = 0; 
             int snapCount = 1;
 
-            double[] XYfull = new double[molAmount]; //массив для всех Rxy
-            double[] Zfull = new double[molAmount]; //массив для всех Rz
+           // double[] XYfull = new double[molAmount]; //массив для всех Rxy
+           // double[] Xfull = new double[molAmount]; //массив для всех Rx
+           // double[] Yfull = new double[molAmount]; //массив для всех Ry
+           // double[] Zfull = new double[molAmount]; //массив для всех Rz
 
 
             //для щёток
-            List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам
-            double[] SideChainXY = new double[239]; //задаётся числом боковых цепей
-            List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам
-            
+            List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам - длина бэкбона (?)
+            List<double> SideChainXY = new List<double>(); //задаётся числом боковых цепей - расстояния от бэкбона до конца боковой цепи по одной щётке
+            List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам - расстояния от бэкбона до конца боковой цепи по всем
 
-
+            double[] X = new double[molAmount]; //размеры в рамках одного снэпшота у гелей
+            double[] Y = new double[molAmount];
             double[] XY = new double[molAmount];
             double[] Z = new double[molAmount];
 
@@ -311,9 +315,9 @@ namespace GelAnalyzer
 
             var sizes = new double[3]; //размеры ящика моделирования
 
-            for (int i = 0; i < files.Length; i++)
+            for (int i = 0; i < files.Length; i++) //идём по снэпшотам
             {
-                res = new double[11];
+                res = new double[15];
                 try
                 {
 
@@ -337,77 +341,139 @@ namespace GelAnalyzer
                     //очищаем коллекции, в которые вырезаем частицы, чтобы избежать перезаписи в снэпшотах и избыточного использования памяти 
                     cylinders.Clear();
                     cylmol.Clear();
-
                     Uphollows.Clear();
                     Downhollows.Clear();
                     UpperHollowmol.Clear();
                     DownHollowmol.Clear();
 
+
+                    int backbonecounter1 = 0;
+                    int backbonecounter2 = 238;
+                    int sideEnd1 = 253;
+
                     //переход к одиночной молекуле
                     for (int j = 0; j < molAmount; j++)
                     {
-                        var mol = file.Skip(j * numberN).Take(numberN).ToList();
+                        var mol = file.Skip(j * numberN).Take(numberN).ToList(); //биды геля
 
                         var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
 
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
                         Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
-                        //centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
 
+                        double[] Masscenter = StructFormer.GetCenterMass(mol);
+                        double diagX = 0.0;
+                        double diagY = 0.0;
+                        double diagZ = 0.0;
+                        double elemXY = 0.0;
+                        double elemXZ = 0.0;
+                        double elemYZ = 0.0;
+
+                        foreach (var c in mol)
+                        {
+                            diagX += Math.Pow(c[0] - Masscenter[0], 2.0);
+                            diagY += Math.Pow(c[1] - Masscenter[1], 2.0);
+                            diagZ += Math.Pow(c[2] - Masscenter[2], 2.0);
+                            elemXY += (c[0] - Masscenter[0]) * (c[1] - Masscenter[1]);
+                            elemXZ += (c[0] - Masscenter[0]) * (c[2] - Masscenter[2]);
+                            elemYZ += (c[1] - Masscenter[1]) * (c[2] - Masscenter[2]);
+                        }
+
+                        var gyrRad = diagX + diagY + diagZ;
+
+                        var gyrTensor = new double[3, 3]{{diagX,elemXY, elemXZ}, {elemXY,diagY, elemYZ}, {elemXZ,elemYZ, diagZ}};
+
+
+                        var solver = new EigenvalueDecomposition(gyrTensor, true, true);
+ 
+                        var eigens = solver.RealEigenvalues;
+                        //некоторые оси могут быть развёрнуты, поэтому нужно смотреть, какие векторы и куда действительно смотрят
+                        var eigenvectors = solver.Eigenvectors;
+                        int indexX = 0;
+                        int indexY = 0;
+                        int indexZ = 0;
+                        for (int k = 0; k < 3; k++)
+                        { 
+                                if (Math.Abs(eigenvectors[0, k]) >= 0.7)
+                                {
+                                    indexX = k;
+                                    break;
+                                }
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            if (Math.Abs(eigenvectors[1, k]) >= 0.7)
+                            {
+                                indexY = k;
+                                break;
+                            }
+                        }
+                        for (int k = 0; k < 3; k++)
+                        {
+                            if (Math.Abs(eigenvectors[2, k]) >= 0.7)
+                            {
+                                indexZ = k;
+                                break;
+                            }
+                        }
 
                         
+
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
                         /*
-                        int backbonecounter1 = 0;
-                        int backbonecounter2 = 238;
-                        int sidecounter1 = 253; 
-                        int sidecounter2 = 268;
+                        //int backbonecounter1 = 0;
+                        //int backbonecounter2 = 238;
+                        //int sideEnd1 = 253; 
+                        
                             
                         if((StructFormer.GetAxDiameter(mol,0)>= 88) || (StructFormer.GetAxDiameter(mol, 1) >= 88) || (StructFormer.GetAxDiameter(mol, 2)>= 88))
                                 {
-                            backbonecounter1 += 3824;
-                            backbonecounter2 += 3824;
-                            sidecounter1 += 3824;
-                            sidecounter2 += 3824;
+                            //backbonecounter1 += 3824;
+                           //backbonecounter2 += 3824;
+                            //sideEnd1 += 3824;
+                            
                             continue;
                                 }
 
                         BackBoneXY.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
                             mol[backbonecounter2][1], mol[backbonecounter1][2], mol[backbonecounter2][2]));
-                        backbonecounter1 += 3824;
-                        backbonecounter2 += 3824;
+                        //backbonecounter1 += 3824;
+                        //backbonecounter2 += 3824;
 
 
-                        for (int q = 0; q < 239; q++)
+
+                        //for (sideEnd1 = 253 + j*numberN; sideEnd1 < numberN + j*numberN - 15; sideEnd1 += 15)
+                        //{
+                        //        SideChainXY.Add(Analyzer.GetDistance(mol[sideEnd1][0], mol[sideEnd1 + 15][0], mol[sideEnd1][1],
+                        //    mol[sideEnd1 + 15][1], mol[sideEnd1][2], mol[sideEnd1 + 15][2]));
+                        //}
+
+                        for (int b = sideEnd1; b < numberN - 15; b += 15)
                         {
-                            for (int p = 253; p < numberN; p += 30)
-                            {
-                                SideChainXY[q] = Analyzer.GetDistance(mol[sidecounter1][0], mol[sidecounter1 + 30][0], mol[sidecounter1][1],
-                            mol[sidecounter1 + 30][1], mol[sidecounter1][2], mol[sidecounter1 + 30][2]);
-                            }
+                            SideChainXY.Add(Analyzer.GetDistance(mol[b][0], mol[b + 15][0], mol[b][1],
+                        mol[b + 15][1], mol[b][2], mol[b + 15][2]));
                         }
-                        sidecounter1 += 3824;
 
-                        for (int q = 0; q < 239; q++)
-                        {
-                            for (int k = 268; k < numberN; k += 30)
-                            {
-                                SideChainXY[q] = Analyzer.GetDistance(mol[sidecounter2][0], mol[sidecounter2 + 30][0], mol[sidecounter2][1],
-                                mol[sidecounter2 + 30][1], mol[sidecounter2][2], mol[sidecounter2 + 30][2]);
-                            }
-                        }
-                        sidecounter2 += 3824;
-
-
-                        BrushSideChainXY.Add(SideChainXY.Average()); 
+                        //sideEnd1 += 3824;
+                        BrushSideChainXY.Add(SideChainXY.Average());
                         */
                         #endregion
-                        
-                        XY[j] = StructFormer.GetHydroRadius2D(mol);
-                        Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
-                
 
+                        // old approach to calc sizes - without tensor diagonalization
+                        /*
+                        XY[j] = StructFormer.GetHydroRadius2D(mol);
+                        X[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 0));
+                        Y[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 1));
+                        Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
+                        */
+
+                        //new approach
+                        X[j] = Math.Sqrt(eigens[indexX]/numberN);
+                        Y[j] = Math.Sqrt(eigens[indexY]/numberN);
+                        Z[j] = Math.Sqrt(eigens[indexZ]/numberN);
+                        XY[j] = Math.Sqrt(X[j]*X[j]  + Y[j]*Y[j]);
+                        
                         if (docentercut)
                         {
                             #region work with one gel для проверки расположения не у стенки
@@ -742,103 +808,137 @@ namespace GelAnalyzer
                     }
 
                     #region средние радиусы с погрешностями и плотности в слое по ансамблю
-                    /*double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
-                    double brushsum = 0;
-                    int check = 0;
-                    for(int k=0; k<BackBoneXY.Count; k++)   
-                    {
-                        if (BackBoneXY[k] > 90)
-                        {
-                            continue;
-                        }
-                        brushsum += BackBoneXY[k];
-                        check++;
-                    }
-                    meantBackbone = brushsum / check;
-                    res[0] = Math.Round(meantBackbone, 2);
-                    check = 0; brushsum = 0;
+                    //для обработки размеров щёток
+                    #region обработки размеров щёток
+                    /* double sum = 0;
+                     double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
+                     double brushsum = 0;
+                     int check = 0;
+                     for(int k=0; k<BackBoneXY.Count; k++)   
+                     {
+                         if (BackBoneXY[k] > 90)
+                         {
+                             continue;
+                         }
+                         brushsum += BackBoneXY[k];
+                         check++;
+                     }
+                     meantBackbone = brushsum / check;
+                     res[0] = Math.Round(meantBackbone, 2);
+                     check = 0; brushsum = 0;
 
-                    for (int k = 0; k < BrushSideChainXY.Count; k++)
-                    {
-                        if (BrushSideChainXY[k] > 90)
-                        {
-                            continue;
-                        }
-                        brushsum += BrushSideChainXY[k];
-                        check++;
-                    }
-                    meantSideChain = brushsum / check;
-                    res[1] = Math.Round(meantSideChain, 2);
-                    check = 0; brushsum = 0;
+                     for (int k = 0; k < BrushSideChainXY.Count; k++)
+                     {
+                         if (BrushSideChainXY[k] > 90)
+                         {
+                             continue;
+                         }
+                         brushsum += BrushSideChainXY[k];
+                         check++;
+                     }
+                     meantSideChain = brushsum / check;
+                     res[1] = Math.Round(meantSideChain, 2);
+                     check = 0; brushsum = 0;
 
 
-                    for (int k = 0; k < BackBoneXY.Count; k++)
-                    {
-                        brushsum += Math.Pow((BackBoneXY[k] - meantBackbone), 2);
-                    }
-                    sqBackBone = Math.Sqrt(brushsum / (BackBoneXY.Count - 1)); brushsum = 0;
-                    res[2] = Math.Round(sqBackBone, 2);
+                     for (int k = 0; k < BackBoneXY.Count; k++)
+                     {
+                         brushsum += Math.Pow((BackBoneXY[k] - meantBackbone), 2);
+                     }
+                     sqBackBone = Math.Sqrt(brushsum / (BackBoneXY.Count - 1)); brushsum = 0;
+                     res[2] = Math.Round(sqBackBone, 2);
 
-                    for (int k = 0; k < BrushSideChainXY.Count; k++)
-                    {
-                        brushsum += Math.Pow((BrushSideChainXY[k] - meantSideChain), 2);
-                    }
-                    sqSideChain = Math.Sqrt(brushsum / (BrushSideChainXY.Count - 1)); brushsum = 0;
-                    res[3] = Math.Round(sqSideChain, 2);
-                    */
+                     for (int k = 0; k < BrushSideChainXY.Count; k++)
+                     {
+                         brushsum += Math.Pow((BrushSideChainXY[k] - meantSideChain), 2);
+                     }
+                     sqSideChain = Math.Sqrt(brushsum / (BrushSideChainXY.Count - 1)); brushsum = 0;
+                     res[3] = Math.Round(sqSideChain, 2);
+                     */
+                    #endregion
 
-                    
-                    double meantradXY, meantradZ, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
+                    double meantradX, meantradY, meantradXY, meantradZ, sqradX, sqradY, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
                     double sum = 0;
-                    for (int k = 0; k < XY.Length; k++)
+
+                    for (int k = 0; k < X.Length; k++)  //X-rad
+                    {
+                        sum += X[k];
+                    }
+                    meantradX = sum / molAmount; sum = 0;
+                    res[0] = Math.Round(meantradX, 2);
+
+                    for (int k = 0; k < Y.Length; k++) //Y - rad
+                    {
+                        sum += Y[k];
+                    }
+                    meantradY = sum / molAmount; sum = 0;
+                    res[1] = Math.Round(meantradY, 2);
+
+
+                    for (int k = 0; k < XY.Length; k++) //XY - rad
                     {
                         sum += XY[k];
                     }
                     meantradXY = sum / molAmount; sum = 0;
-                    res[0] = Math.Round(meantradXY, 2);
+                    res[2] = Math.Round(meantradXY, 2);
 
-                    for (int k = 0; k < Z.Length; k++)
+                    
+                    for (int k = 0; k < Z.Length; k++) //Z - rad
                     {
                         sum += Z[k];
                     }
                     meantradZ = sum / molAmount; sum = 0;
-                    res[1] = Math.Round(meantradZ, 2);
+                    res[3] = Math.Round(meantradZ, 2);
 
-                    for (int k = 0; k < XY.Length; k++)
+                    for (int k = 0; k < X.Length; k++) //sqX - rad
+                    {
+                        sum += Math.Pow((X[k] - meantradX), 2);
+                    }
+                    sqradX = Math.Sqrt(sum / (X.Length - 1)); sum = 0;
+                    res[4] = Math.Round(sqradX, 2);
+
+                    for (int k = 0; k < Y.Length; k++) //sqY -rad
+                    {
+                        sum += Math.Pow((Y[k] - meantradY), 2);
+                    }
+                    sqradY = Math.Sqrt(sum / (Y.Length - 1)); sum = 0;
+                    res[5] = Math.Round(sqradY, 2);
+
+                    for (int k = 0; k < XY.Length; k++) //sqXY -rad
                     {
                         sum += Math.Pow((XY[k] - meantradXY), 2);
                     }
                     //sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
                     sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
-                    res[2] = Math.Round(sqradXY, 2);
+                    res[6] = Math.Round(sqradXY, 2);
 
-                    for (int k = 0; k < Z.Length; k++)
+                    for (int k = 0; k < Z.Length; k++) //sqZ - rad
                     {
                         sum += Math.Pow((Z[k] - meantradZ), 2);
                     }
                     sqradZ = Math.Sqrt(sum / (Z.Length - 1)); sum = 0;
-                    res[3] = Math.Round(sqradZ, 2);
+                    res[7] = Math.Round(sqradZ, 2);
                     
                     for (int k = 0; k < poldens.Length; k++)
                     {
                         sum += Math.Pow((poldens[k]), 2);
                     }
                     mpoldens = Math.Sqrt(sum / (poldens.Length)); sum = 0;
-                    res[4] = Math.Round(mpoldens, 2);
+                    res[8] = Math.Round(mpoldens, 2);
 
                     for (int k = 0; k < volpoldens.Length; k++)
                     {
                         sum += Math.Pow((volpoldens[k]), 2);
                     }
                     mvolpoldens = Math.Sqrt(sum / (fulldens.Length)); sum = 0;
-                    res[5] = Math.Round(mvolpoldens, 2);
+                    res[9] = Math.Round(mvolpoldens, 2);
 
                     for (int k = 0; k < fulldens.Length; k++)
                     {
                         sum += Math.Pow((fulldens[k]), 2);
                     }
                     mfulldens = Math.Sqrt(sum / (volpoldens.Length)); sum = 0;
-                    res[6] = Math.Round(mfulldens, 2);
+                    res[10] = Math.Round(mfulldens, 2);
                     #endregion
 
                     #region усредняем параметр порядка
@@ -853,14 +953,14 @@ namespace GelAnalyzer
                         sum += XOrientationalOrderTypeA[q];
                     }
                     XSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
-                    res[7] = XSystemOrientationalOrderTypeA;
+                    res[11] = XSystemOrientationalOrderTypeA;
 
                     for (int q = 0; q < YOrientationalOrderTypeA.Length; q++)
                     {
                         sum += YOrientationalOrderTypeA[q];
                     }
                     YSystemOrientationalOrderTypeA = sum / molAmount; sum = 0;
-                    res[8] = YSystemOrientationalOrderTypeA;
+                    res[12] = YSystemOrientationalOrderTypeA;
 
 
                     for (int q = 0; q < XOrientationalOrderTypeB.Length; q++)
@@ -868,14 +968,14 @@ namespace GelAnalyzer
                         sum += XOrientationalOrderTypeB[q];
                     }
                     XSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
-                    res[9] = XSystemOrientationalOrderTypeB;
+                    res[13] = XSystemOrientationalOrderTypeB;
 
                     for (int q = 0; q < YOrientationalOrderTypeB.Length; q++)
                     {
                         sum += YOrientationalOrderTypeB[q];
                     }
                     YSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
-                    res[10] = YSystemOrientationalOrderTypeB;
+                    res[14] = YSystemOrientationalOrderTypeB;
                     #endregion
 
                     GeneralRes.Add(res);
@@ -887,7 +987,7 @@ namespace GelAnalyzer
                 }
             }
 
-            var CalcResult = new double[11];
+            var CalcResult = new double[15];
 
             //усреднение по снэпшотам
             for(int i=0; i<CalcResult.Length; i++)
@@ -908,17 +1008,21 @@ namespace GelAnalyzer
         {
             var args = (object[])e.Result;
             tbMolNum.Text = ((int)args[0]).ToString();
-            tbXYradius.Text = ((double[])args[1])[0].ToString();
-            tbZradius.Text = ((double[])args[1])[1].ToString();
-            tbsqXYradius.Text = ((double[])args[1])[2].ToString();
-            tbsqZradius.Text = ((double[])args[1])[3].ToString();
-            tbDens1.Text = ((double[])args[1])[4].ToString();
-            tbDens2.Text = ((double[])args[1])[5].ToString();
-            tbDens3.Text = ((double[])args[1])[6].ToString();
-            tbXOrientationalOrderTypeA.Text = ((double[])args[1])[7].ToString();
-            tbYOrientationalOrderTypeA.Text = ((double[])args[1])[8].ToString();
-            tbXOrientationalOrderTypeB.Text = ((double[])args[1])[9].ToString();
-            tbYOrientationalOrderTypeB.Text = ((double[])args[1])[10].ToString();
+            tbXradius.Text = ((double[])args[1])[0].ToString();
+            tbYradius.Text = ((double[])args[1])[1].ToString();
+            tbXYradius.Text = ((double[])args[1])[2].ToString();
+            tbZradius.Text = ((double[])args[1])[3].ToString();
+            tbsqXradius.Text = ((double[])args[1])[4].ToString();
+            tbsqYradius.Text = ((double[])args[1])[5].ToString();
+            tbsqXYradius.Text = ((double[])args[1])[6].ToString();
+            tbsqZradius.Text = ((double[])args[1])[7].ToString();
+            tbDens1.Text = ((double[])args[1])[8].ToString();
+            tbDens2.Text = ((double[])args[1])[9].ToString();
+            tbDens3.Text = ((double[])args[1])[10].ToString();
+            tbXOrientationalOrderTypeA.Text = ((double[])args[1])[11].ToString();
+            tbYOrientationalOrderTypeA.Text = ((double[])args[1])[12].ToString();
+            tbXOrientationalOrderTypeB.Text = ((double[])args[1])[13].ToString();
+            tbYOrientationalOrderTypeB.Text = ((double[])args[1])[14].ToString();
 
             pBar.Value = 0;
         }
@@ -971,13 +1075,17 @@ namespace GelAnalyzer
             var sizes = (double[])args[4];
 
             var mGel = MolData.ConvertToMolData(mol, true, bonds);
-            
+
             // Do the recolor
-            Analyzer.RecolorALL(mGel, subchainLength, colorLength);
+            //Analyzer.RecolorALL(mGel, subchainLength, colorLength);
 
-            var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
+            //var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
 
-            e.Result = new object[] { mGel, sizes, savePath };
+            //e.Result = new object[] { mGel, sizes, savePath };
+
+            double result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
+
+            MessageBox.Show(result.ToString());
         }
 
         #endregion
@@ -998,6 +1106,27 @@ namespace GelAnalyzer
 
             FileWorker.SaveLammpstrj(false, savePath + "//diblocked" + ".lammpstrj",
                                     1, sizes, 0, mGel);
+
+        }
+
+        private void button_S_Parameter_Click(object sender, EventArgs e)
+        {
+            var colorLength = Convert.ToInt32(tbRecolorLength.Text);
+            var subchainLength = Convert.ToInt32(tbSubchainLength.Text);
+
+            List<double[]> inputMg = new List<double[]>();
+            List<int[]> mgBonds = new List<int[]>();
+            List<int[]> mgAngles = new List<int[]>();
+
+            var sizes = new double[] { 0.0, 0.0, 0.0 };
+            FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
+            bgWorkerRecolor.RunWorkerAsync(new object[] { inputMg, mgBonds, colorLength, subchainLength, sizes });
+
+           // MessageBox.Show(result);
+        }
+
+        private void label18_Click(object sender, EventArgs e)
+        {
 
         }
     }

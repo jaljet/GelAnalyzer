@@ -78,6 +78,7 @@
             this.tbDens2 = new System.Windows.Forms.TextBox();
             this.tcGeneral = new System.Windows.Forms.TabControl();
             this.tpMonolayers = new System.Windows.Forms.TabPage();
+            this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
             this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
             this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
             this.tbYOrientationalOrderTypeA = new System.Windows.Forms.TextBox();
@@ -88,6 +89,7 @@
             this.checkCenterCut = new System.Windows.Forms.CheckBox();
             this.checkAxOrientationalParameter = new System.Windows.Forms.CheckBox();
             this.tpageRecolor = new System.Windows.Forms.TabPage();
+            this.button_S_Parameter = new System.Windows.Forms.Button();
             this.label15 = new System.Windows.Forms.Label();
             this.tbSubchainLength = new System.Windows.Forms.TextBox();
             this.btnChooseMgel = new System.Windows.Forms.Button();
@@ -97,7 +99,14 @@
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.tbXradius = new System.Windows.Forms.TextBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.tbYradius = new System.Windows.Forms.TextBox();
+            this.tbsqXradius = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.tbsqYradius = new System.Windows.Forms.TextBox();
+            this.label19 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -154,7 +163,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(26, 167);
+            this.label3.Location = new System.Drawing.Point(29, 210);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(152, 13);
             this.label3.TabIndex = 5;
@@ -170,7 +179,7 @@
             // 
             // tbZradius
             // 
-            this.tbZradius.Location = new System.Drawing.Point(190, 164);
+            this.tbZradius.Location = new System.Drawing.Point(193, 207);
             this.tbZradius.Name = "tbZradius";
             this.tbZradius.Size = new System.Drawing.Size(66, 20);
             this.tbZradius.TabIndex = 7;
@@ -235,7 +244,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(26, 301);
+            this.label6.Location = new System.Drawing.Point(26, 337);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(71, 13);
             this.label6.TabIndex = 15;
@@ -243,7 +252,7 @@
             // 
             // tbSurfArea
             // 
-            this.tbSurfArea.Location = new System.Drawing.Point(114, 298);
+            this.tbSurfArea.Location = new System.Drawing.Point(114, 334);
             this.tbSurfArea.Name = "tbSurfArea";
             this.tbSurfArea.Size = new System.Drawing.Size(142, 20);
             this.tbSurfArea.TabIndex = 16;
@@ -371,7 +380,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(26, 195);
+            this.label8.Location = new System.Drawing.Point(26, 237);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(134, 13);
             this.label8.TabIndex = 24;
@@ -379,7 +388,7 @@
             // 
             // tbsqXYradius
             // 
-            this.tbsqXYradius.Location = new System.Drawing.Point(160, 192);
+            this.tbsqXYradius.Location = new System.Drawing.Point(160, 234);
             this.tbsqXYradius.Name = "tbsqXYradius";
             this.tbsqXYradius.Size = new System.Drawing.Size(86, 20);
             this.tbsqXYradius.TabIndex = 25;
@@ -387,7 +396,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(26, 222);
+            this.label9.Location = new System.Drawing.Point(26, 264);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(128, 13);
             this.label9.TabIndex = 26;
@@ -395,7 +404,7 @@
             // 
             // tbsqZradius
             // 
-            this.tbsqZradius.Location = new System.Drawing.Point(160, 218);
+            this.tbsqZradius.Location = new System.Drawing.Point(160, 260);
             this.tbsqZradius.Name = "tbsqZradius";
             this.tbsqZradius.Size = new System.Drawing.Size(86, 20);
             this.tbsqZradius.TabIndex = 27;
@@ -496,6 +505,14 @@
             // tpMonolayers
             // 
             this.tpMonolayers.BackColor = System.Drawing.SystemColors.Control;
+            this.tpMonolayers.Controls.Add(this.tbsqYradius);
+            this.tpMonolayers.Controls.Add(this.label19);
+            this.tpMonolayers.Controls.Add(this.tbsqXradius);
+            this.tpMonolayers.Controls.Add(this.label18);
+            this.tpMonolayers.Controls.Add(this.label17);
+            this.tpMonolayers.Controls.Add(this.tbYradius);
+            this.tpMonolayers.Controls.Add(this.label16);
+            this.tpMonolayers.Controls.Add(this.tbXradius);
             this.tpMonolayers.Controls.Add(this.checkUpperBottomCut);
             this.tpMonolayers.Controls.Add(this.checkInterfaceCut);
             this.tpMonolayers.Controls.Add(this.tbYOrientationalOrderTypeB);
@@ -546,6 +563,16 @@
             this.tpMonolayers.TabIndex = 0;
             this.tpMonolayers.Text = "Монослои";
             // 
+            // checkUpperBottomCut
+            // 
+            this.checkUpperBottomCut.AutoSize = true;
+            this.checkUpperBottomCut.Location = new System.Drawing.Point(417, 101);
+            this.checkUpperBottomCut.Name = "checkUpperBottomCut";
+            this.checkUpperBottomCut.Size = new System.Drawing.Size(281, 17);
+            this.checkUpperBottomCut.TabIndex = 48;
+            this.checkUpperBottomCut.Text = "Для полых: вырезать гели выше/ниже межфазки";
+            this.checkUpperBottomCut.UseVisualStyleBackColor = true;
+            // 
             // checkInterfaceCut
             // 
             this.checkInterfaceCut.AutoSize = true;
@@ -558,14 +585,14 @@
             // 
             // tbYOrientationalOrderTypeB
             // 
-            this.tbYOrientationalOrderTypeB.Location = new System.Drawing.Point(340, 259);
+            this.tbYOrientationalOrderTypeB.Location = new System.Drawing.Point(348, 312);
             this.tbYOrientationalOrderTypeB.Name = "tbYOrientationalOrderTypeB";
             this.tbYOrientationalOrderTypeB.Size = new System.Drawing.Size(68, 20);
             this.tbYOrientationalOrderTypeB.TabIndex = 46;
             // 
             // tbYOrientationalOrderTypeA
             // 
-            this.tbYOrientationalOrderTypeA.Location = new System.Drawing.Point(342, 233);
+            this.tbYOrientationalOrderTypeA.Location = new System.Drawing.Point(350, 286);
             this.tbYOrientationalOrderTypeA.Name = "tbYOrientationalOrderTypeA";
             this.tbYOrientationalOrderTypeA.Size = new System.Drawing.Size(66, 20);
             this.tbYOrientationalOrderTypeA.TabIndex = 45;
@@ -573,7 +600,7 @@
             // lblOrientationalOrderTypeB
             // 
             this.lblOrientationalOrderTypeB.AutoSize = true;
-            this.lblOrientationalOrderTypeB.Location = new System.Drawing.Point(414, 262);
+            this.lblOrientationalOrderTypeB.Location = new System.Drawing.Point(422, 315);
             this.lblOrientationalOrderTypeB.Name = "lblOrientationalOrderTypeB";
             this.lblOrientationalOrderTypeB.Size = new System.Drawing.Size(67, 13);
             this.lblOrientationalOrderTypeB.TabIndex = 43;
@@ -582,7 +609,7 @@
             // lblOrientationalOrderTypeA
             // 
             this.lblOrientationalOrderTypeA.AutoSize = true;
-            this.lblOrientationalOrderTypeA.Location = new System.Drawing.Point(414, 236);
+            this.lblOrientationalOrderTypeA.Location = new System.Drawing.Point(422, 289);
             this.lblOrientationalOrderTypeA.Name = "lblOrientationalOrderTypeA";
             this.lblOrientationalOrderTypeA.Size = new System.Drawing.Size(67, 13);
             this.lblOrientationalOrderTypeA.TabIndex = 42;
@@ -590,14 +617,14 @@
             // 
             // tbXOrientationalOrderTypeB
             // 
-            this.tbXOrientationalOrderTypeB.Location = new System.Drawing.Point(262, 259);
+            this.tbXOrientationalOrderTypeB.Location = new System.Drawing.Point(270, 312);
             this.tbXOrientationalOrderTypeB.Name = "tbXOrientationalOrderTypeB";
             this.tbXOrientationalOrderTypeB.Size = new System.Drawing.Size(66, 20);
             this.tbXOrientationalOrderTypeB.TabIndex = 41;
             // 
             // tbXOrientationalOrderTypeA
             // 
-            this.tbXOrientationalOrderTypeA.Location = new System.Drawing.Point(262, 233);
+            this.tbXOrientationalOrderTypeA.Location = new System.Drawing.Point(270, 286);
             this.tbXOrientationalOrderTypeA.Name = "tbXOrientationalOrderTypeA";
             this.tbXOrientationalOrderTypeA.Size = new System.Drawing.Size(66, 20);
             this.tbXOrientationalOrderTypeA.TabIndex = 40;
@@ -615,7 +642,7 @@
             // checkAxOrientationalParameter
             // 
             this.checkAxOrientationalParameter.AutoSize = true;
-            this.checkAxOrientationalParameter.Location = new System.Drawing.Point(24, 244);
+            this.checkAxOrientationalParameter.Location = new System.Drawing.Point(32, 297);
             this.checkAxOrientationalParameter.Name = "checkAxOrientationalParameter";
             this.checkAxOrientationalParameter.Size = new System.Drawing.Size(232, 17);
             this.checkAxOrientationalParameter.TabIndex = 38;
@@ -625,6 +652,7 @@
             // tpageRecolor
             // 
             this.tpageRecolor.BackColor = System.Drawing.SystemColors.Control;
+            this.tpageRecolor.Controls.Add(this.button_S_Parameter);
             this.tpageRecolor.Controls.Add(this.label15);
             this.tpageRecolor.Controls.Add(this.tbSubchainLength);
             this.tpageRecolor.Controls.Add(this.btnChooseMgel);
@@ -638,6 +666,15 @@
             this.tpageRecolor.Size = new System.Drawing.Size(1177, 488);
             this.tpageRecolor.TabIndex = 1;
             this.tpageRecolor.Text = "Перекраска";
+            // 
+            // button_S_Parameter
+            // 
+            this.button_S_Parameter.Location = new System.Drawing.Point(251, 130);
+            this.button_S_Parameter.Name = "button_S_Parameter";
+            this.button_S_Parameter.Size = new System.Drawing.Size(199, 23);
+            this.button_S_Parameter.TabIndex = 0;
+            this.button_S_Parameter.Text = "S_parameter";
+            this.button_S_Parameter.Click += new System.EventHandler(this.button_S_Parameter_Click);
             // 
             // label15
             // 
@@ -696,7 +733,7 @@
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(153, 23);
             this.button4.TabIndex = 26;
-            this.button4.Text = "Пуск";
+            this.button4.Text = "Перекрасить в диблок";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
@@ -711,15 +748,72 @@
             // 
             this.openFileDialog.FileName = "openFileDialog";
             // 
-            // checkUpperBottomCut
+            // label16
             // 
-            this.checkUpperBottomCut.AutoSize = true;
-            this.checkUpperBottomCut.Location = new System.Drawing.Point(417, 101);
-            this.checkUpperBottomCut.Name = "checkUpperBottomCut";
-            this.checkUpperBottomCut.Size = new System.Drawing.Size(281, 17);
-            this.checkUpperBottomCut.TabIndex = 48;
-            this.checkUpperBottomCut.Text = "Для полых: вырезать гели выше/ниже межфазки";
-            this.checkUpperBottomCut.UseVisualStyleBackColor = true;
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(29, 164);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(152, 13);
+            this.label16.TabIndex = 49;
+            this.label16.Text = "Inertia\'s radius value on X-axis:";
+            // 
+            // tbXradius
+            // 
+            this.tbXradius.Location = new System.Drawing.Point(193, 161);
+            this.tbXradius.Name = "tbXradius";
+            this.tbXradius.Size = new System.Drawing.Size(66, 20);
+            this.tbXradius.TabIndex = 50;
+            this.tbXradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(29, 188);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(152, 13);
+            this.label17.TabIndex = 51;
+            this.label17.Text = "Inertia\'s radius value on Y-axis:";
+            // 
+            // tbYradius
+            // 
+            this.tbYradius.Location = new System.Drawing.Point(193, 185);
+            this.tbYradius.Name = "tbYradius";
+            this.tbYradius.Size = new System.Drawing.Size(66, 20);
+            this.tbYradius.TabIndex = 52;
+            this.tbYradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // tbsqXradius
+            // 
+            this.tbsqXradius.Location = new System.Drawing.Point(403, 233);
+            this.tbsqXradius.Name = "tbsqXradius";
+            this.tbsqXradius.Size = new System.Drawing.Size(86, 20);
+            this.tbsqXradius.TabIndex = 54;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(269, 237);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(128, 13);
+            this.label18.TabIndex = 53;
+            this.label18.Text = "Dispersion of R on X-axis:";
+            this.label18.Click += new System.EventHandler(this.label18_Click);
+            // 
+            // tbsqYradius
+            // 
+            this.tbsqYradius.Location = new System.Drawing.Point(403, 259);
+            this.tbsqYradius.Name = "tbsqYradius";
+            this.tbsqYradius.Size = new System.Drawing.Size(86, 20);
+            this.tbsqYradius.TabIndex = 56;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(269, 263);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(128, 13);
+            this.label19.TabIndex = 55;
+            this.label19.Text = "Dispersion of R on Y-axis:";
             // 
             // Form1
             // 
@@ -816,6 +910,15 @@
         private System.Windows.Forms.TextBox tbYOrientationalOrderTypeA;
         private System.Windows.Forms.CheckBox checkInterfaceCut;
         private System.Windows.Forms.CheckBox checkUpperBottomCut;
+        private System.Windows.Forms.Button button_S_Parameter;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox tbYradius;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox tbXradius;
+        private System.Windows.Forms.TextBox tbsqYradius;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.TextBox tbsqXradius;
+        private System.Windows.Forms.Label label18;
     }
 }
 
