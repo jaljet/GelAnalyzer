@@ -78,6 +78,14 @@
             this.tbDens2 = new System.Windows.Forms.TextBox();
             this.tcGeneral = new System.Windows.Forms.TabControl();
             this.tpMonolayers = new System.Windows.Forms.TabPage();
+            this.tbsqYradius = new System.Windows.Forms.TextBox();
+            this.label19 = new System.Windows.Forms.Label();
+            this.tbsqXradius = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.label17 = new System.Windows.Forms.Label();
+            this.tbYradius = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.tbXradius = new System.Windows.Forms.TextBox();
             this.checkUpperBottomCut = new System.Windows.Forms.CheckBox();
             this.checkInterfaceCut = new System.Windows.Forms.CheckBox();
             this.tbYOrientationalOrderTypeB = new System.Windows.Forms.TextBox();
@@ -99,14 +107,6 @@
             this.button4 = new System.Windows.Forms.Button();
             this.bgWorkerRecolor = new System.ComponentModel.BackgroundWorker();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.label16 = new System.Windows.Forms.Label();
-            this.tbXradius = new System.Windows.Forms.TextBox();
-            this.label17 = new System.Windows.Forms.Label();
-            this.tbYradius = new System.Windows.Forms.TextBox();
-            this.tbsqXradius = new System.Windows.Forms.TextBox();
-            this.label18 = new System.Windows.Forms.Label();
-            this.tbsqYradius = new System.Windows.Forms.TextBox();
-            this.label19 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.tcGeneral.SuspendLayout();
             this.tpMonolayers.SuspendLayout();
@@ -563,6 +563,73 @@
             this.tpMonolayers.TabIndex = 0;
             this.tpMonolayers.Text = "Монослои";
             // 
+            // tbsqYradius
+            // 
+            this.tbsqYradius.Location = new System.Drawing.Point(403, 259);
+            this.tbsqYradius.Name = "tbsqYradius";
+            this.tbsqYradius.Size = new System.Drawing.Size(86, 20);
+            this.tbsqYradius.TabIndex = 56;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(269, 263);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(128, 13);
+            this.label19.TabIndex = 55;
+            this.label19.Text = "Dispersion of R on Y-axis:";
+            // 
+            // tbsqXradius
+            // 
+            this.tbsqXradius.Location = new System.Drawing.Point(403, 233);
+            this.tbsqXradius.Name = "tbsqXradius";
+            this.tbsqXradius.Size = new System.Drawing.Size(86, 20);
+            this.tbsqXradius.TabIndex = 54;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(269, 237);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(128, 13);
+            this.label18.TabIndex = 53;
+            this.label18.Text = "Dispersion of R on X-axis:";
+            this.label18.Click += new System.EventHandler(this.label18_Click);
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(29, 188);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(152, 13);
+            this.label17.TabIndex = 51;
+            this.label17.Text = "Inertia\'s radius value on Y-axis:";
+            // 
+            // tbYradius
+            // 
+            this.tbYradius.Location = new System.Drawing.Point(193, 185);
+            this.tbYradius.Name = "tbYradius";
+            this.tbYradius.Size = new System.Drawing.Size(66, 20);
+            this.tbYradius.TabIndex = 52;
+            this.tbYradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(29, 164);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(152, 13);
+            this.label16.TabIndex = 49;
+            this.label16.Text = "Inertia\'s radius value on X-axis:";
+            // 
+            // tbXradius
+            // 
+            this.tbXradius.Location = new System.Drawing.Point(193, 161);
+            this.tbXradius.Name = "tbXradius";
+            this.tbXradius.Size = new System.Drawing.Size(66, 20);
+            this.tbXradius.TabIndex = 50;
+            this.tbXradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
             // checkUpperBottomCut
             // 
             this.checkUpperBottomCut.AutoSize = true;
@@ -679,7 +746,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(257, 52);
+            this.label15.Location = new System.Drawing.Point(285, 51);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(87, 13);
             this.label15.TabIndex = 33;
@@ -687,7 +754,7 @@
             // 
             // tbSubchainLength
             // 
-            this.tbSubchainLength.Location = new System.Drawing.Point(368, 49);
+            this.tbSubchainLength.Location = new System.Drawing.Point(396, 48);
             this.tbSubchainLength.Name = "tbSubchainLength";
             this.tbSubchainLength.Size = new System.Drawing.Size(63, 20);
             this.tbSubchainLength.TabIndex = 32;
@@ -712,7 +779,7 @@
             // 
             // tbRecolorLength
             // 
-            this.tbRecolorLength.Location = new System.Drawing.Point(136, 49);
+            this.tbRecolorLength.Location = new System.Drawing.Point(164, 48);
             this.tbRecolorLength.Name = "tbRecolorLength";
             this.tbRecolorLength.Size = new System.Drawing.Size(100, 20);
             this.tbRecolorLength.TabIndex = 28;
@@ -721,11 +788,11 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(24, 52);
+            this.label14.Location = new System.Drawing.Point(14, 51);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(106, 13);
+            this.label14.Size = new System.Drawing.Size(144, 13);
             this.label14.TabIndex = 27;
-            this.label14.Text = "Длина перекраски:";
+            this.label14.Text = "Длина перекраски в тип 2:";
             // 
             // button4
             // 
@@ -747,73 +814,6 @@
             // openFileDialog
             // 
             this.openFileDialog.FileName = "openFileDialog";
-            // 
-            // label16
-            // 
-            this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(29, 164);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(152, 13);
-            this.label16.TabIndex = 49;
-            this.label16.Text = "Inertia\'s radius value on X-axis:";
-            // 
-            // tbXradius
-            // 
-            this.tbXradius.Location = new System.Drawing.Point(193, 161);
-            this.tbXradius.Name = "tbXradius";
-            this.tbXradius.Size = new System.Drawing.Size(66, 20);
-            this.tbXradius.TabIndex = 50;
-            this.tbXradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(29, 188);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(152, 13);
-            this.label17.TabIndex = 51;
-            this.label17.Text = "Inertia\'s radius value on Y-axis:";
-            // 
-            // tbYradius
-            // 
-            this.tbYradius.Location = new System.Drawing.Point(193, 185);
-            this.tbYradius.Name = "tbYradius";
-            this.tbYradius.Size = new System.Drawing.Size(66, 20);
-            this.tbYradius.TabIndex = 52;
-            this.tbYradius.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // tbsqXradius
-            // 
-            this.tbsqXradius.Location = new System.Drawing.Point(403, 233);
-            this.tbsqXradius.Name = "tbsqXradius";
-            this.tbsqXradius.Size = new System.Drawing.Size(86, 20);
-            this.tbsqXradius.TabIndex = 54;
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(269, 237);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(128, 13);
-            this.label18.TabIndex = 53;
-            this.label18.Text = "Dispersion of R on X-axis:";
-            this.label18.Click += new System.EventHandler(this.label18_Click);
-            // 
-            // tbsqYradius
-            // 
-            this.tbsqYradius.Location = new System.Drawing.Point(403, 259);
-            this.tbsqYradius.Name = "tbsqYradius";
-            this.tbsqYradius.Size = new System.Drawing.Size(86, 20);
-            this.tbsqYradius.TabIndex = 56;
-            // 
-            // label19
-            // 
-            this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(269, 263);
-            this.label19.Name = "label19";
-            this.label19.Size = new System.Drawing.Size(128, 13);
-            this.label19.TabIndex = 55;
-            this.label19.Text = "Dispersion of R on Y-axis:";
             // 
             // Form1
             // 

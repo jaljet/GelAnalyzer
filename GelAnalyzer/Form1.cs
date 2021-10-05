@@ -281,9 +281,9 @@ namespace GelAnalyzer
 
 
             //для щёток
-            List<double> BackBoneXY = new List<double>();//храним данные по всем щёткам - длина бэкбона (?)
-            List<double> SideChainXY = new List<double>(); //задаётся числом боковых цепей - расстояния от бэкбона до конца боковой цепи по одной щётке
-            List<double> BrushSideChainXY = new List<double>();//храним данные по всем щёткам - расстояния от бэкбона до конца боковой цепи по всем
+            List<double> BackBone = new List<double>();//храним данные по всем щёткам - длина бэкбона (?)
+            List<double> SideChain = new List<double>(); //задаётся числом боковых цепей - расстояния от бэкбона до конца боковой цепи по одной щётке
+            List<double> BrushSideChain = new List<double>();//храним данные по всем щёткам - расстояния от бэкбона до конца боковой цепи по всем
 
             double[] X = new double[molAmount]; //размеры в рамках одного снэпшота у гелей
             double[] Y = new double[molAmount];
@@ -421,7 +421,7 @@ namespace GelAnalyzer
 
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
-                        /*
+                        
                         //int backbonecounter1 = 0;
                         //int backbonecounter2 = 238;
                         //int sideEnd1 = 253; 
@@ -436,7 +436,7 @@ namespace GelAnalyzer
                             continue;
                                 }
 
-                        BackBoneXY.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
+                        BackBone.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
                             mol[backbonecounter2][1], mol[backbonecounter1][2], mol[backbonecounter2][2]));
                         //backbonecounter1 += 3824;
                         //backbonecounter2 += 3824;
@@ -451,13 +451,13 @@ namespace GelAnalyzer
 
                         for (int b = sideEnd1; b < numberN - 15; b += 15)
                         {
-                            SideChainXY.Add(Analyzer.GetDistance(mol[b][0], mol[b + 15][0], mol[b][1],
+                            SideChain.Add(Analyzer.GetDistance(mol[b][0], mol[b + 15][0], mol[b][1],
                         mol[b + 15][1], mol[b][2], mol[b + 15][2]));
                         }
 
                         //sideEnd1 += 3824;
-                        BrushSideChainXY.Add(SideChainXY.Average());
-                        */
+                        BrushSideChain.Add(SideChain.Average());
+                        
                         #endregion
 
                         // old approach to calc sizes - without tensor diagonalization
@@ -810,30 +810,31 @@ namespace GelAnalyzer
                     #region средние радиусы с погрешностями и плотности в слое по ансамблю
                     //для обработки размеров щёток
                     #region обработки размеров щёток
-                    /* double sum = 0;
+                    /*
+                     double sum = 0;
                      double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
                      double brushsum = 0;
                      int check = 0;
-                     for(int k=0; k<BackBoneXY.Count; k++)   
+                     for(int k=0; k<BackBone.Count; k++)   
                      {
-                         if (BackBoneXY[k] > 90)
+                         if (BackBone[k] > 90)
                          {
                              continue;
                          }
-                         brushsum += BackBoneXY[k];
+                         brushsum += BackBone[k];
                          check++;
                      }
                      meantBackbone = brushsum / check;
                      res[0] = Math.Round(meantBackbone, 2);
                      check = 0; brushsum = 0;
 
-                     for (int k = 0; k < BrushSideChainXY.Count; k++)
+                     for (int k = 0; k < BrushSideChain.Count; k++)
                      {
-                         if (BrushSideChainXY[k] > 90)
+                         if (BrushSideChain[k] > 90)
                          {
                              continue;
                          }
-                         brushsum += BrushSideChainXY[k];
+                         brushsum += BrushSideChain[k];
                          check++;
                      }
                      meantSideChain = brushsum / check;
@@ -841,22 +842,22 @@ namespace GelAnalyzer
                      check = 0; brushsum = 0;
 
 
-                     for (int k = 0; k < BackBoneXY.Count; k++)
+                     for (int k = 0; k < BackBone.Count; k++)
                      {
-                         brushsum += Math.Pow((BackBoneXY[k] - meantBackbone), 2);
+                         brushsum += Math.Pow((BackBone[k] - meantBackbone), 2);
                      }
-                     sqBackBone = Math.Sqrt(brushsum / (BackBoneXY.Count - 1)); brushsum = 0;
+                     sqBackBone = Math.Sqrt(brushsum / (BackBone.Count - 1)); brushsum = 0;
                      res[2] = Math.Round(sqBackBone, 2);
 
-                     for (int k = 0; k < BrushSideChainXY.Count; k++)
+                     for (int k = 0; k < BrushSideChain.Count; k++)
                      {
-                         brushsum += Math.Pow((BrushSideChainXY[k] - meantSideChain), 2);
+                         brushsum += Math.Pow((BrushSideChain[k] - meantSideChain), 2);
                      }
-                     sqSideChain = Math.Sqrt(brushsum / (BrushSideChainXY.Count - 1)); brushsum = 0;
+                     sqSideChain = Math.Sqrt(brushsum / (BrushSideChain.Count - 1)); brushsum = 0;
                      res[3] = Math.Round(sqSideChain, 2);
                      */
                     #endregion
-
+                    
                     double meantradX, meantradY, meantradXY, meantradZ, sqradX, sqradY, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
                     double sum = 0;
 
@@ -889,14 +890,14 @@ namespace GelAnalyzer
                     }
                     meantradZ = sum / molAmount; sum = 0;
                     res[3] = Math.Round(meantradZ, 2);
-
+                    
                     for (int k = 0; k < X.Length; k++) //sqX - rad
                     {
                         sum += Math.Pow((X[k] - meantradX), 2);
                     }
                     sqradX = Math.Sqrt(sum / (X.Length - 1)); sum = 0;
                     res[4] = Math.Round(sqradX, 2);
-
+                    
                     for (int k = 0; k < Y.Length; k++) //sqY -rad
                     {
                         sum += Math.Pow((Y[k] - meantradY), 2);
@@ -1077,15 +1078,17 @@ namespace GelAnalyzer
             var mGel = MolData.ConvertToMolData(mol, true, bonds);
 
             // Do the recolor
-            //Analyzer.RecolorALL(mGel, subchainLength, colorLength);
+            Analyzer.RecolorALL(mGel, subchainLength, colorLength);
 
-            //var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
+            var savePath = Path.GetDirectoryName(tbMicrogelPath.Text);
 
-            //e.Result = new object[] { mGel, sizes, savePath };
+            e.Result = new object[] { mGel, sizes, savePath };
 
-            double result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
+            //S parameter
 
-            MessageBox.Show(result.ToString());
+            //double result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
+
+           // MessageBox.Show(result.ToString());
         }
 
         #endregion
@@ -1106,6 +1109,8 @@ namespace GelAnalyzer
 
             FileWorker.SaveLammpstrj(false, savePath + "//diblocked" + ".lammpstrj",
                                     1, sizes, 0, mGel);
+
+            MessageBox.Show("Work is done!");
 
         }
 
