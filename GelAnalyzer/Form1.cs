@@ -361,7 +361,7 @@ namespace GelAnalyzer
                         var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
 
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
-                        Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+                        //Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
 
                         double[] Masscenter = StructFormer.GetCenterMass(mol);
                         double diagX = 0.0;
