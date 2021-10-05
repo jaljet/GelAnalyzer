@@ -326,6 +326,8 @@ namespace GelAnalyzer
                     List<double[]> centermass = new List<double[]>();//центры масс гелей
                     List<double[]> centers = new List<double[]>(); //центры масс гелей не у стенки
                     List<double> cXY = new List<double>(); //Rxy гелей не у стенки
+                    List<double> cY = new List<double>(); //Ry гелей не у стенки
+                    List<double> cX = new List<double>(); //Ry гелей не у стенки
                     List<double[]> cylinders = new List<double[]>(); //частицы гелей не у стенки
 
                     List<double[]> hollowUpCentersmass = new List<double[]>(); //центры масс гелей, полость которых ориентирована вверх 
@@ -489,6 +491,8 @@ namespace GelAnalyzer
                             {
                                 centers.Add(StructFormer.GetCenterMass(mol));
                                 cXY.Add(XY[j]);
+                                cX.Add(X[j]);
+                                cY.Add(Y[j]);
                             }
 
                             #endregion
@@ -641,7 +645,7 @@ namespace GelAnalyzer
                         {
 
                             cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
-                                                                <= 0.33 * cXY[k]).ToList());
+                                                                <= 0.33 * Math.Min(cY[k],cX[k])).ToList());
                         }
 
 
