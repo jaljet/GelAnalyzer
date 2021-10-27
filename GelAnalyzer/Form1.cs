@@ -361,8 +361,12 @@ namespace GelAnalyzer
                         var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
 
                         centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
-                        //Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
 
+                        if (!docentercut)
+                        {
+                            Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+                            //Analyzer.DoAutoCenter(true, 5, sizes, centerPoint, mol); //для 3D - центровки уже у щётки
+                        }
                         double[] Masscenter = StructFormer.GetCenterMass(mol);
                         double diagX = 0.0;
                         double diagY = 0.0;
@@ -383,11 +387,11 @@ namespace GelAnalyzer
 
                         var gyrRad = diagX + diagY + diagZ;
 
-                        var gyrTensor = new double[3, 3]{{diagX,elemXY, elemXZ}, {elemXY,diagY, elemYZ}, {elemXZ,elemYZ, diagZ}};
+                        var gyrTensor = new double[3, 3] { { diagX, elemXY, elemXZ }, { elemXY, diagY, elemYZ }, { elemXZ, elemYZ, diagZ } };
 
 
                         var solver = new EigenvalueDecomposition(gyrTensor, true, true);
- 
+
                         var eigens = solver.RealEigenvalues;
                         //некоторые оси могут быть развёрнуты, поэтому нужно смотреть, какие векторы и куда действительно смотрят
                         var eigenvectors = solver.Eigenvectors;
@@ -395,12 +399,12 @@ namespace GelAnalyzer
                         int indexY = 0;
                         int indexZ = 0;
                         for (int k = 0; k < 3; k++)
-                        { 
-                                if (Math.Abs(eigenvectors[0, k]) >= 0.7)
-                                {
-                                    indexX = k;
-                                    break;
-                                }
+                        {
+                            if (Math.Abs(eigenvectors[0, k]) >= 0.7)
+                            {
+                                indexX = k;
+                                break;
+                            }
                         }
                         for (int k = 0; k < 3; k++)
                         {
@@ -419,24 +423,24 @@ namespace GelAnalyzer
                             }
                         }
 
-                        
+
 
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
-                        
+
                         //int backbonecounter1 = 0;
                         //int backbonecounter2 = 238;
                         //int sideEnd1 = 253; 
-                        
-                            
-                        if((StructFormer.GetAxDiameter(mol,0)>= 88) || (StructFormer.GetAxDiameter(mol, 1) >= 88) || (StructFormer.GetAxDiameter(mol, 2)>= 88))
-                                {
+
+
+                        if ((StructFormer.GetAxDiameter(mol, 0) >= 88) || (StructFormer.GetAxDiameter(mol, 1) >= 88) || (StructFormer.GetAxDiameter(mol, 2) >= 88))
+                        {
                             //backbonecounter1 += 3824;
-                           //backbonecounter2 += 3824;
+                            //backbonecounter2 += 3824;
                             //sideEnd1 += 3824;
-                            
+
                             continue;
-                                }
+                        }
 
                         BackBone.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
                             mol[backbonecounter2][1], mol[backbonecounter1][2], mol[backbonecounter2][2]));
@@ -459,7 +463,7 @@ namespace GelAnalyzer
 
                         //sideEnd1 += 3824;
                         BrushSideChain.Add(SideChain.Average());
-                        
+
                         #endregion
 
                         // old approach to calc sizes - without tensor diagonalization
@@ -471,11 +475,11 @@ namespace GelAnalyzer
                         */
 
                         //new approach
-                        X[j] = Math.Sqrt(eigens[indexX]/numberN);
-                        Y[j] = Math.Sqrt(eigens[indexY]/numberN);
-                        Z[j] = Math.Sqrt(eigens[indexZ]/numberN);
-                        XY[j] = Math.Sqrt(X[j]*X[j]  + Y[j]*Y[j]);
-                        
+                        X[j] = Math.Sqrt(eigens[indexX] / numberN);
+                        Y[j] = Math.Sqrt(eigens[indexY] / numberN);
+                        Z[j] = Math.Sqrt(eigens[indexZ] / numberN);
+                        XY[j] = Math.Sqrt(X[j] * X[j] + Y[j] * Y[j]);
+
                         if (docentercut)
                         {
                             #region work with one gel для проверки расположения не у стенки
@@ -508,7 +512,7 @@ namespace GelAnalyzer
                             FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
                             var bonds = (List<int[]>)args[1];
                             var mGel = MolData.ConvertToMolData(mol, true, bonds);
-                            
+
                             double XCosAngle = 0;
                             double YCosAngle = 0;
 
@@ -610,11 +614,12 @@ namespace GelAnalyzer
 
                             #endregion
                         }
-                        
-                        
-                        
-                        /*
+
+
+
+
                         #region красим концы щётки в тип 1
+                        /*
                         int end = 253;
 
                         for (int p = 0; p < numberN; p++)
@@ -630,9 +635,13 @@ namespace GelAnalyzer
                         BrushWithColoredEnds = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
                                     , 0, 0, 0, BrushColoredEnds);
 
+                        //сохраняем щётку
+                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//brush" + (i + 1).ToString() + ".lammpstrj",
+                                                                 1, sizes, 3, BrushWithColoredEnds);
 
-                        #endregion
                         */
+                        #endregion
+
 
                     }
 
@@ -656,12 +665,6 @@ namespace GelAnalyzer
                                                  1, sizes, 3, cylmol);
                         #endregion
                     }
-
-                    /*
-                    //сохраняем щётку
-                    FileWorker.SaveLammpstrj(false, tbPath.Text + "//brush" + (i + 1).ToString() + ".lammpstrj",
-                                                                 1, sizes, 3, BrushWithColoredEnds);
-                    */
 
 
 
@@ -812,8 +815,10 @@ namespace GelAnalyzer
                     }
 
                     #region средние радиусы с погрешностями и плотности в слое по ансамблю
+
+
                     //для обработки размеров щёток
-                    #region обработки размеров щёток
+                    #region обработка размеров щёток
                     /*
                      double sum = 0;
                      double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
@@ -829,7 +834,7 @@ namespace GelAnalyzer
                          check++;
                      }
                      meantBackbone = brushsum / check;
-                     res[0] = Math.Round(meantBackbone, 2);
+                     res[0] = Math.Round(meantBackbone, 2); //длина бэкбона
                      check = 0; brushsum = 0;
 
                      for (int k = 0; k < BrushSideChain.Count; k++)
@@ -842,7 +847,7 @@ namespace GelAnalyzer
                          check++;
                      }
                      meantSideChain = brushsum / check;
-                     res[1] = Math.Round(meantSideChain, 2);
+                     res[1] = Math.Round(meantSideChain, 2); //длина боковой щётки
                      check = 0; brushsum = 0;
 
 
@@ -851,20 +856,20 @@ namespace GelAnalyzer
                          brushsum += Math.Pow((BackBone[k] - meantBackbone), 2);
                      }
                      sqBackBone = Math.Sqrt(brushsum / (BackBone.Count - 1)); brushsum = 0;
-                     res[2] = Math.Round(sqBackBone, 2);
+                     res[2] = Math.Round(sqBackBone, 2); //погрешность размера бэкбона
 
                      for (int k = 0; k < BrushSideChain.Count; k++)
                      {
                          brushsum += Math.Pow((BrushSideChain[k] - meantSideChain), 2);
                      }
                      sqSideChain = Math.Sqrt(brushsum / (BrushSideChain.Count - 1)); brushsum = 0;
-                     res[3] = Math.Round(sqSideChain, 2);
+                     res[3] = Math.Round(sqSideChain, 2); //погрешность длины боковой щётки
                      */
                     #endregion
                     
                     double meantradX, meantradY, meantradXY, meantradZ, sqradX, sqradY, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
                     double sum = 0;
-
+                    
                     for (int k = 0; k < X.Length; k++)  //X-rad
                     {
                         sum += X[k];
@@ -913,7 +918,7 @@ namespace GelAnalyzer
                     {
                         sum += Math.Pow((XY[k] - meantradXY), 2);
                     }
-                    //sqradXY = Math.Sqrt(sum / (XYfull.Length - 1)); sum = 0;
+                    
                     sqradXY = Math.Sqrt(sum / (XY.Length - 1)); sum = 0;
                     res[6] = Math.Round(sqradXY, 2);
 

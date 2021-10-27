@@ -188,7 +188,7 @@ namespace GelAnalyzer
 
         #region AutoCenter
         public static void DoAutoCenter(bool withZCenter, int k, double[] sizes, double[] centerPoint,
-            List<double[]> file)
+            List<double[]> file) //withZCenter allows us to do 3D centering
         {
             if (k == 0)
             {

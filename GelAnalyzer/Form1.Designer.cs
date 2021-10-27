@@ -701,10 +701,9 @@
             this.checkCenterCut.AutoSize = true;
             this.checkCenterCut.Location = new System.Drawing.Point(417, 55);
             this.checkCenterCut.Name = "checkCenterCut";
-            this.checkCenterCut.Size = new System.Drawing.Size(551, 17);
+            this.checkCenterCut.Size = new System.Drawing.Size(175, 17);
             this.checkCenterCut.TabIndex = 39;
-            this.checkCenterCut.Text = "Вырезать центральные гели (для корректной работы нужно вырубить автоцентровку отд" +
-    "ельного геля)";
+            this.checkCenterCut.Text = "Вырезать центральные гели ";
             this.checkCenterCut.UseVisualStyleBackColor = true;
             // 
             // checkAxOrientationalParameter
