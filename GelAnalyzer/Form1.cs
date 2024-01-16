@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,6 +9,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Accord.Math.Decompositions;
 
@@ -224,8 +226,7 @@ namespace GelAnalyzer
 
         private void btnStart1_Click(object sender, EventArgs e)
         {
-           // try
-            //{
+
                 lblProgBar.Visible = true;
                 pBar.Visible = true;
 
@@ -257,7 +258,7 @@ namespace GelAnalyzer
             var numberN = (int)args[0]; //число частиц в каждой молекуле
             var files = (string[])args[1]; //берём файлы
             var molAmount = (int)args[2]; //число молекул
-            var epsilon = (double)args[3]; //половина толщины слоя
+            var epsilon = (double)args[3]; //половина толщины слоя среза
             var centre = (double)args[4]; //расположение межфазной границы (для вычисления в одном слое)
             bool docentercut = (bool)args[5]; //вырезаем центральные в монослое гели в отдельный снэпшот или нет
             bool calcOrientationalOrder = (bool)args[6]; //считаем или не считаем ориентационный параметр порядка
@@ -273,12 +274,6 @@ namespace GelAnalyzer
             var density = new double[3]; //результат подсчёта плотности полимера, общей плотности и об. доли полимера в слое системы
             int molCount = 0; 
             int snapCount = 1;
-
-           // double[] XYfull = new double[molAmount]; //массив для всех Rxy
-           // double[] Xfull = new double[molAmount]; //массив для всех Rx
-           // double[] Yfull = new double[molAmount]; //массив для всех Ry
-           // double[] Zfull = new double[molAmount]; //массив для всех Rz
-
 
             //для щёток
             List<double> BackBone = new List<double>();//храним данные по всем щёткам - длина бэкбона (?)
@@ -323,6 +318,23 @@ namespace GelAnalyzer
 
                     var file = FileWorker.LoadLammpstrjLines(files[i], out snapCount, out sizes);
 
+
+                    //test room
+                    /*
+                    var testmol = file.ToList(); //биды геля
+                    testmol = testmol.Where(x=> x[2] <= 105 && x[2] >= 75).ToList();
+                    List<double[]> outs = new List<double[]>();
+                     outs.AddRange(testmol.ToList());
+                     var outmol = new List<MolData>();
+                     outmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                     , 0, 0, 0, outs);
+                     double[] testsizes = {sizes[0], sizes[1], 30};
+                     FileWorker.SaveLammpstrj(false, @"F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\60\all\slice.lammpstrj",
+                                                      1, testsizes, 3, outmol);
+                    */
+                    //test room closed
+
+
                     List<double[]> centermass = new List<double[]>();//центры масс гелей
                     List<double[]> centers = new List<double[]>(); //центры масс гелей не у стенки
                     List<double> cXY = new List<double>(); //Rxy гелей не у стенки
@@ -353,8 +365,10 @@ namespace GelAnalyzer
                     int backbonecounter2 = 238;
                     int sideEnd1 = 253;
 
-                    //переход к одиночной молекуле
-                    for (int j = 0; j < molAmount; j++)
+                //file = file.OrderBy(f=> f[3]).ToList();
+
+                //переход к одиночной молекуле
+                for (int j = 0; j < molAmount; j++)
                     {
                         var mol = file.Skip(j * numberN).Take(numberN).ToList(); //биды геля
 
@@ -364,8 +378,8 @@ namespace GelAnalyzer
 
                         if (!docentercut)
                         {
-                            Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
-                            //Analyzer.DoAutoCenter(true, 5, sizes, centerPoint, mol); //для 3D - центровки уже у щётки
+                            //Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+                            Analyzer.DoAutoCenter(true, 5, sizes, centerPoint, mol); //для 3D - центровки уже у щётки
                         }
                         double[] Masscenter = StructFormer.GetCenterMass(mol);
                         double diagX = 0.0;
@@ -374,6 +388,13 @@ namespace GelAnalyzer
                         double elemXY = 0.0;
                         double elemXZ = 0.0;
                         double elemYZ = 0.0;
+
+
+                        if ((StructFormer.GetAxDiameter(mol, 0) >= 80) || (StructFormer.GetAxDiameter(mol, 1) >= 80) || (StructFormer.GetAxDiameter(mol, 2) >= 80))
+                        {
+                            continue;
+                        }
+                        //var mol1 = mol.Take(239).ToList();
 
                         foreach (var c in mol)
                         {
@@ -427,34 +448,17 @@ namespace GelAnalyzer
 
                         //ищем размеры щётки: по backbone и по соседним концам боковых цепей
                         #region всякие размеры щётки
-
-                        //int backbonecounter1 = 0;
-                        //int backbonecounter2 = 238;
-                        //int sideEnd1 = 253; 
-
+                        
 
                         if ((StructFormer.GetAxDiameter(mol, 0) >= 88) || (StructFormer.GetAxDiameter(mol, 1) >= 88) || (StructFormer.GetAxDiameter(mol, 2) >= 88))
                         {
-                            //backbonecounter1 += 3824;
-                            //backbonecounter2 += 3824;
-                            //sideEnd1 += 3824;
-
                             continue;
                         }
 
                         BackBone.Add(Analyzer.GetDistance(mol[backbonecounter1][0], mol[backbonecounter2][0], mol[backbonecounter1][1],
                             mol[backbonecounter2][1], mol[backbonecounter1][2], mol[backbonecounter2][2]));
-                        //backbonecounter1 += 3824;
-                        //backbonecounter2 += 3824;
 
-
-
-                        //for (sideEnd1 = 253 + j*numberN; sideEnd1 < numberN + j*numberN - 15; sideEnd1 += 15)
-                        //{
-                        //        SideChainXY.Add(Analyzer.GetDistance(mol[sideEnd1][0], mol[sideEnd1 + 15][0], mol[sideEnd1][1],
-                        //    mol[sideEnd1 + 15][1], mol[sideEnd1][2], mol[sideEnd1 + 15][2]));
-                        //}
-
+                   
                         for (int b = sideEnd1; b < numberN - 15; b += 15)
                         {
                             SideChain.Add(Analyzer.GetDistance(mol[b][0], mol[b + 15][0], mol[b][1],
@@ -466,13 +470,6 @@ namespace GelAnalyzer
 
                         #endregion
 
-                        // old approach to calc sizes - without tensor diagonalization
-                        /*
-                        XY[j] = StructFormer.GetHydroRadius2D(mol);
-                        X[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 0));
-                        Y[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 1));
-                        Z[j] = Math.Sqrt(StructFormer.GetAxInertSquareRadius(mol, 2));
-                        */
 
                         //new approach
                         X[j] = Math.Sqrt(eigens[indexX] / numberN);
@@ -650,20 +647,176 @@ namespace GelAnalyzer
                         #region вырезание центральных в монослое гелей в отдельный снэпшот
                         // отбираем все частицы в радиусе 1/3 Rxy от центров масс отобранных раннее центральных гелей
 
-                        for (int k = 0; k < centers.Count; k++)
-                        {
+                        //for (int k = 0; k < centers.Count; k++)
+                        //{
+                        //
+                        //    cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
+                        //                                        <= 0.33 * Math.Min(cY[k],cX[k])).ToList());
+                        //}
+                        //
+                        //    
+                        //cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                        //        , 0, 0, 0, cylinders);
+                        //
+                        //FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
+                        //                         1, sizes, 3, cylmol);
+                        #endregion
 
-                            cylinders.AddRange(file.Where(x => Math.Sqrt(Math.Pow(Math.Abs(x[0] - centers[k][0]), 2) + Math.Pow(Math.Abs(x[1] - centers[k][1]), 2))
-                                                                <= 0.33 * Math.Min(cY[k],cX[k])).ToList());
+
+                        #region вырезание микрогеля с жидкостями
+                        // есть sizes - в нем размеры ящика
+                        // есть file - в нем все частицы снэпшота; это массив из 5 чисел: x-y-z + тип частицы + связь
+                        // мы должны пройтись от стенок вдоль каждого направления (x-y-z) и при обнаружении молекулы типа 1 запомнить её координаты
+                        // а лучше так: берём "канал" частиц толщиной 2 до середины ящика при фиксированном x-y
+                        // строится следующим образом (должно быть 3 варианта): фиксированное X, фиксированное Y, рост Z до sizes/2
+                        // затем X и Y увеличиваем на 1
+                        // на каждом шаге мы смотрим тип частицы, и если он ЯВЛЯЕТСЯ тип 1, то добавляем его и обрываем цикл
+
+                        // сначала ходим по X, здесь фиксированное Y и Z, а X будет расти до значения в половину ящика
+                        // сначала растет параллельно Y, потом Z
+                        List<double[]> microgelParticles = new List<double[]>();
+                        microgelParticles.AddRange(file.Where(x => x[3] == 1 || x[3] == 1.01));
+
+
+                        SynchronizedCollection<double[]> allLiquidParticles = new SynchronizedCollection<double[]>();
+                        for (int y = 0; y< file.Count; y++)
+                        {
+                            double[] liqData = file[y];
+                      
+                            if(liqData[3] != 1 && liqData[3] != 1.01 &&
+                                                                    (liqData[0] > 13 && liqData[0] < 67) &&
+                                                                    (liqData[1] > 10 && liqData[1] < 74) &&
+                                                                    (liqData[2] > 9 && liqData[2] < 67)
+                                )
+                            {
+                                allLiquidParticles.Add(liqData);
+                            }
                         }
 
+                        SynchronizedCollection<double[]> microgelLiquidParticles = new SynchronizedCollection<double[]>();
 
-                        cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
-                                , 0, 0, 0, cylinders);
+                        // хотя бы одна частица полимера с координатой по x/y/z БОЛЬШЕЙ чем координаты бида жидкости
+                        // и хотя бы одна частица полимера с координатой по x/y/z МЕНЬШЕЙ чем координаты бида жидкости
 
-                        FileWorker.SaveLammpstrj(false, tbPath.Text + "//res" + (i + 1).ToString() + ".lammpstrj",
-                                                 1, sizes, 3, cylmol);
+                        int chunkSize = allLiquidParticles.Count / 8; // вычисляем размер чанка
+
+                        GelStruct gel = new GelStruct(new List<double[]>(microgelParticles));
+                        double maxDistance = gel.maxDistanceToCenter;
+                        double[] gelCenterPoint = gel.centerMassPoint;
+
+                        Parallel.For(0, 8, count =>
+                        {
+
+                        //    GelStruct gelStruct = new GelStruct(microgelParticles);
+                            int start = count * chunkSize;
+                            int end = (count == 7) ? allLiquidParticles.Count : (count + 1) * chunkSize; // последний чанк может быть меньшего размера
+
+                            SynchronizedCollection<double[]> polyParticles = new SynchronizedCollection<double[]>();
+                            for (int j = 0; j < file.Count; j++)
+                            {
+                                if (file[j][3] == 1)
+                                {
+                                    polyParticles.Add(file[j]);
+                                }
+                            }
+
+                            //  || file[j][3] == 1.01
+
+                            for (int liquidCounter = start; liquidCounter < end; liquidCounter++)
+                            {
+
+                                if (Analyzer.checkDistance(allLiquidParticles[liquidCounter], polyParticles, maxDistance, gelCenterPoint))
+                                {
+                                    microgelLiquidParticles.Add(allLiquidParticles[liquidCounter]);
+                                }
+
+                                /*
+                                if (Analyzer.checkAtLeastOneIsHigher(allLiquidParticles[liquidCounter], microgelParticles) &&
+                                    Analyzer.checkAtLeastOneIsLower(allLiquidParticles[liquidCounter], microgelParticles))
+                                {
+                                    microgelLiquidParticles.Add(allLiquidParticles[liquidCounter]);
+                                }*/
+                            }
+
+                        });
+                                              
+
+                           /*     
+                        SynchronizedCollection<Point> vertices = new SynchronizedCollection<Point>();
+                        foreach (double[] point in microgelParticles)
+                        {
+                            vertices.Add(new Point(point[0], point[1],point[2]));
+                        }
+
+                        int chunkSize = vertices.Count / 8; // вычисляем размер чанка
+                        int verticesCount = vertices.Count;
+
+                        Parallel.For(0, 8, count =>
+                        {
+                            //   Polygon polygon = new Polygon(vertices);
+
+                            GelStruct gelStruct = new GelStruct(microgelParticles);
+                            int start = count * chunkSize;
+                            int end = (count == 7) ? verticesCount : (count + 1) * chunkSize; // последний чанк может быть меньшего размера
+
+                            Console.WriteLine(start + "_" + end);
+
+                            for (int j = start; j < end; j++)
+                            {
+                                      Point point = new Point(allLiquidParticles[j][0],
+                                                             allLiquidParticles[j][1],
+                                                              allLiquidParticles[j][2]);
+
+                                if (gelStruct.IsPointInside(point))
+                                {
+                                    microgelLiquidParticles.Add(allLiquidParticles[j]);
+                                }
+
+                                //   if(Analyzer.isBeadInside(microgelParticles, 
+                                //       allLiquidParticles[j][0], 
+                                //       allLiquidParticles[j][1], 
+                                //       allLiquidParticles[j][2]))
+                                //   {
+                                //       microgelLiquidParticles.Add(allLiquidParticles[j]);
+                                //   }
+
+
+                                //    if (polygon.Contains(point))
+                                //    {
+                                //        microgelLiquidParticles.Add(allLiquidParticles[j]);
+                                //    }
+                            }
+
+                        });
+
+
+                      //  for (int liquidCounter = 0; liquidCounter < allLiquidParticles.Count; liquidCounter++)
+                      //  {
+                      //      Point point = new Point(allLiquidParticles[liquidCounter][0],
+                       //                             allLiquidParticles[liquidCounter][1],
+                      //                              allLiquidParticles[liquidCounter][2]);
+                      //      if(polygon.Contains(point)) {
+                      //          microgelLiquidParticles.Add(allLiquidParticles[liquidCounter]);
+                      //      }
+                      //  }
+
+                         */
+
+                        var resultParticles = new List<double[]>();
+                        resultParticles.AddRange(microgelParticles);
+                        resultParticles.AddRange(microgelLiquidParticles);
+
+                        var liquidInsideMol = new List<MolData>();
+                        liquidInsideMol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                , 0, 0, 0, resultParticles);
+                        
+                        FileWorker.SaveLammpstrj(false, tbPath.Text + "//result" + (i + 1).ToString() + ".lammpstrj",
+                                                 1, sizes, 3, liquidInsideMol);
+
+
                         #endregion
+
+
                     }
 
 
@@ -821,7 +974,7 @@ namespace GelAnalyzer
                     #region обработка размеров щёток
                     /*
                      double sum = 0;
-                     double meantBackbone, meantSideChain, sqBackBone, sqSideChain;
+                     double meanBackbone, meanSideChain, sqBackBone, sqSideChain;
                      double brushsum = 0;
                      int check = 0;
                      for(int k=0; k<BackBone.Count; k++)   
@@ -833,8 +986,8 @@ namespace GelAnalyzer
                          brushsum += BackBone[k];
                          check++;
                      }
-                     meantBackbone = brushsum / check;
-                     res[0] = Math.Round(meantBackbone, 2); //длина бэкбона
+                     meanBackbone = brushsum / check;
+                     res[0] = Math.Round(meanBackbone, 2); //длина бэкбона
                      check = 0; brushsum = 0;
 
                      for (int k = 0; k < BrushSideChain.Count; k++)
@@ -846,25 +999,27 @@ namespace GelAnalyzer
                          brushsum += BrushSideChain[k];
                          check++;
                      }
-                     meantSideChain = brushsum / check;
-                     res[1] = Math.Round(meantSideChain, 2); //длина боковой щётки
+                     meanSideChain = brushsum / check;
+                     res[1] = Math.Round(meanSideChain, 2); //длина боковой щётки
                      check = 0; brushsum = 0;
 
 
                      for (int k = 0; k < BackBone.Count; k++)
                      {
-                         brushsum += Math.Pow((BackBone[k] - meantBackbone), 2);
+                         brushsum += Math.Pow((BackBone[k] - meanBackbone), 2);
                      }
-                     sqBackBone = Math.Sqrt(brushsum / (BackBone.Count - 1)); brushsum = 0;
+                     sqBackBone = Math.Sqrt(brushsum / (BackBone.Count - 1)); 
+                     brushsum = 0;
                      res[2] = Math.Round(sqBackBone, 2); //погрешность размера бэкбона
 
                      for (int k = 0; k < BrushSideChain.Count; k++)
                      {
-                         brushsum += Math.Pow((BrushSideChain[k] - meantSideChain), 2);
+                         brushsum += Math.Pow((BrushSideChain[k] - meanSideChain), 2);
                      }
-                     sqSideChain = Math.Sqrt(brushsum / (BrushSideChain.Count - 1)); brushsum = 0;
-                     res[3] = Math.Round(sqSideChain, 2); //погрешность длины боковой щётки
-                     */
+                     sqSideChain = Math.Sqrt(brushsum / (BrushSideChain.Count - 1)); 
+                     brushsum = 0;
+                     res[3] = Math.Round(sqSideChain, 2); //погрешность длины боковой щётки*/
+                     
                     #endregion
                     
                     double meantradX, meantradY, meantradXY, meantradZ, sqradX, sqradY, sqradXY, sqradZ, mpoldens, mfulldens, mvolpoldens;
@@ -952,6 +1107,8 @@ namespace GelAnalyzer
                     #endregion
 
                     #region усредняем параметр порядка
+
+                    /*
                     double XSystemOrientationalOrderTypeA = 0;
                     double YSystemOrientationalOrderTypeA = 0;
                     double XSystemOrientationalOrderTypeB = 0;
@@ -985,9 +1142,9 @@ namespace GelAnalyzer
                         sum += YOrientationalOrderTypeB[q];
                     }
                     YSystemOrientationalOrderTypeB = sum / molAmount; sum = 0;
-                    res[14] = YSystemOrientationalOrderTypeB;
+                    res[14] = YSystemOrientationalOrderTypeB;*/
                     #endregion
-
+                    
                     GeneralRes.Add(res);
                 }
                 catch (Exception ex)
@@ -1093,11 +1250,6 @@ namespace GelAnalyzer
 
             e.Result = new object[] { mGel, sizes, savePath };
 
-            //S parameter
-
-            //double result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
-
-           // MessageBox.Show(result.ToString());
         }
 
         #endregion
@@ -1125,7 +1277,7 @@ namespace GelAnalyzer
 
         private void button_S_Parameter_Click(object sender, EventArgs e)
         {
-            var colorLength = Convert.ToInt32(tbRecolorLength.Text);
+            var Type2_ColorLength = Convert.ToInt32(tbRecolorLength.Text);
             var subchainLength = Convert.ToInt32(tbSubchainLength.Text);
 
             List<double[]> inputMg = new List<double[]>();
@@ -1133,14 +1285,70 @@ namespace GelAnalyzer
             List<int[]> mgAngles = new List<int[]>();
 
             var sizes = new double[] { 0.0, 0.0, 0.0 };
-            FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
-            bgWorkerRecolor.RunWorkerAsync(new object[] { inputMg, mgBonds, colorLength, subchainLength, sizes });
 
-           // MessageBox.Show(result);
+            try
+            {
+                FileWorker.LoadConfLines(out sizes[0], out sizes[1], out sizes[2], openFileDialog.FileName, inputMg, mgBonds, mgAngles);
+            }
+            catch(Exception ex){
+                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Произошла ошибка при чтении!\nУбедитесь, что выбранный файл имеет нужный формат!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return;
+            }
+
+            bgWorkerS_parameter.RunWorkerAsync(new object[] { inputMg, mgBonds, Type2_ColorLength, subchainLength, sizes });
         }
 
-        private void label18_Click(object sender, EventArgs e)
+        private void bgWorkerS_parameter_DoWork(object sender, DoWorkEventArgs e)
         {
+            var args = (object[])e.Argument;
+            var mol = (List<double[]>)args[0];
+            var bonds = (List<int[]>)args[1];
+            var colorLength = (int)args[2];
+            var subchainLength = (int)args[3];
+            var sizes = (double[])args[4];
+
+            int beadsAmount = 50025; //число бидов на один МГ
+            int bondsAmount = 53388; //число связей на один МГ
+            int molAmount = 10; //число МГ
+
+            //bonds = bonds.OrderBy(x => x[1]).ToList();
+
+            List<MolData> mGel = new List<MolData>();
+
+            for (int j = 0; j < molAmount; j++)
+            {
+                var tempMol = mol.Skip(j * beadsAmount).Take(beadsAmount).ToList(); //биды геля
+                var tempBonds = bonds.Skip(j * bondsAmount).Take(bondsAmount).ToList(); //связи геля
+                foreach (var c in tempBonds)
+                {
+                    c[0] -= j * beadsAmount;
+                    c[1] -= j * beadsAmount;
+                }
+                var tempMGel = MolData.ConvertToMolData(tempMol, true, tempBonds);
+
+                mGel.AddRange(tempMGel);
+
+            }
+
+            var result = Analyzer.Calculate_S_Parameter(mGel, subchainLength, colorLength);
+
+            e.Result = new object[] { result, sizes};
+
+        }
+
+        private void bgWorkerS_parameter_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            pBar.Value = e.ProgressPercentage;
+        }
+
+        private void bgWorkerS_parameter_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            var args = (object[])e.Result;
+            pBar.Value = 0;
+
+            MessageBox.Show("Work is done!");
+            //MessageBox.Show("Sx, Sy =" + string.Join(", ", args[0]));
 
         }
     }

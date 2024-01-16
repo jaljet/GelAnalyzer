@@ -306,7 +306,7 @@ namespace GelAnalyzer
         }
         #endregion
 
-        public List<double[]> ConvertToListDouble(List<MolData> data)
+        public static List<double[]> ConvertToListDouble(List<MolData> data)
         {
             var doubleData = new List<double[]>();
 

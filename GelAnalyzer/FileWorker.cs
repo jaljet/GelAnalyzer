@@ -159,7 +159,8 @@ namespace GelAnalyzer
         }
         */
 
-        public static void LoadConfLines(out double xSize, out double ySize, out double zSize, string fileName, List<double[]> data, List<int[]> bonds, List<int[]> angles)
+        public static void LoadConfLines(out double xSize, out double ySize, out double zSize, string fileName, 
+            List<double[]> data, List<int[]> bonds, List<int[]> angles)
         {
             xSize = 0;
             ySize = 0;

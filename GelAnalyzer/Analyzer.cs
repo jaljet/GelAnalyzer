@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
+using System.IO;
 
 namespace GelAnalyzer
 {
     public static class Analyzer
     {
+
+        static int beadInSubchainCounter = 1;
+
         #region getting MolSizes
         // Находит координаты всех центров масс 
         public static double[] GetMolsSizes(int molNum, int molCount, List<double[]> file, double[] bSizes)
@@ -465,101 +469,218 @@ namespace GelAnalyzer
         }
 
 
-        public static double Calculate_S_Parameter(List<MolData> mGel, int subchainLength, int colorLength)
+        public static List<double> Calculate_S_Parameter(List<MolData> mGel, int subchainLength, int colorLength)
         {
-            
-            //C:\Users\obi-v\Desktop\SCIENCE\Diblocks\models\test for parameter\16ksub6-diblocked.txt
 
-
+        //F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\200\gel\for S parameter\gel - 1000000 - bonds.txt
+               
             List<double[]> centermass = new List<double[]>();//центры масс гелей
-            List<double> gelSx = new List<double>(); //параметры Sx всех гелей
-            List<double> gelSy = new List<double>(); //параметры Sy всех гелей
+            List<double> SCosX = new List<double>(); //параметры Sx всех гелей
+            List<double> SCosY = new List<double>(); //параметры Sy всех гелей
+            List<double> devSCosX = new List<double>(); //погрешности Sx всех гелей
+            List<double> devSCosY = new List<double>(); //погрешности Sy всех гелей
 
             //переход к одиночной молекуле
-            for (int j = 0; j < 10; j++) //10 - число МГ в монослое
+            for (int j = 0; j < 1; j++) //10 - число МГ в монослое
             {
-                double[] sizes = new double[] { 220.0, 60.0, 182.0 };
-
+                double[] sizes = new double[] { 220, 60, 182 }; //размеры ящика
 
                 var mol = mGel.Skip(j * 50025).Take(50025).ToList(); //50025 - число частиц в МГ
+
+                mol = mol.Where(x => x.AtomType == 1.00).ToList(); //changing this will allow us to calc S-parameter for block A or B
 
                 var centerPoint = StructFormer.GetCenterPoint(sizes, mol); //центр ящика 
 
                 centermass.Add(StructFormer.GetCenterMass(mol)); //центр масс геля в 3 координатах
-                Analyzer.DoAutoCenter(false, 5, sizes, centerPoint, mol);
+
+                var crossLinkers = GetCrossLinkers(mol);
+                //List<double[]> boundaries = new List<double[]> { new double[] { 0, sizes[0] }, new double[] { 0, sizes[1] }, new double[] { 0, sizes[2] } };
+
+                //slice
+                
+                mol = mol.Where(x => (x.ZCoord >= 89) && (x.ZCoord <= 91)).ToList(); //make a slice
+                List<double[]> boundaries = new List<double[]> { new double[] {0, sizes[0] }, new double[] {0 , sizes[1] }, new double[] {89, 91 } };
+                
+                
+
+                //test room
+                
+                List<double[]> testmol = MolData.ConvertToListDouble(mol);
+                 List<double[]> cylinders = new List<double[]>();
+                 cylinders.AddRange(testmol.ToList());
+                 var cylmol = new List<MolData>();
+                 cylmol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                 , 0, 0, 0, cylinders);
+
+                 FileWorker.SaveLammpstrj(false, @"F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\60\chains test\mgel" + (j + 1).ToString() + ".lammpstrj",
+                                                  1, sizes, 3, cylmol);
+                
+                //test room closed
 
 
-
-                var crossLinkers = GetCrossLinkers(mGel);
 
                 crossLinkers = crossLinkers.Where(x => x.AtomType == 1.00).ToList(); //changing this will allow us to calc S-parameter for block A or B
 
                 //S = 0.5 * < 3 * cos^2 (theta) - 1 > 
                 //theta = angle between OX/OY-axis & subchain director
 
+                var ACosXmean = 0.0;
+                var ACosYmean = 0.0;
 
-                var SmeanX = 0.0;
-                var SmeanY = 0.0;
-                var sigmaSx = 0.0;
-                var sigmaSy = 0.0;
-                List<double> generalSx = new List<double>(); //все Sx в рамках геля
-                List<double> generalSy = new List<double>(); //все Sy в рамках геля
-
-                var tempAngleX = 0.0;
-                var tempAngleY = 0.0;
-
+                List<double> gelACosSx = new List<double>(); //все углы для Sx в рамках геля
+                List<double> gelACosSy = new List<double>(); //все углы для Sy в рамках геля
                 double[] subchaindirector = { 0.0, 0.0 };
+
+                int counter = 0;
+                
                 foreach (var c in crossLinkers)
                 {
                     for (int i = 0; i < c.Bonds.Count; i++)
                     {
-                        var chainEnd = getChainEnd(c.Index, c.Bonds[i], c.Index, mGel);
+                        //var chainEnd = getChainEnd(c.Index, c.Bonds[i], c.Index, mol);
+
+                        beadInSubchainCounter = 1;
+                        var chainEnd = getChainEndWithBoundaries(c.Index, c.Bonds[i], c.Index, mol, boundaries);
+
+                        if(beadInSubchainCounter != colorLength || chainEnd.AtomType != c.AtomType)
+                        {
+                            beadInSubchainCounter = 1;
+                            continue;
+                        }
+
                         subchaindirector[0] = chainEnd.XCoord - c.XCoord;
                         subchaindirector[1] = chainEnd.YCoord - c.YCoord;
-                        //tempAngle = Analyzer.GetAngle(c.XCoord, chainEnd.XCoord, c.YCoord, chainEnd.YCoord, c.ZCoord, chainEnd.ZCoord);
-                        tempAngleX = Analyzer.GetXYPlaneAngle(subchaindirector[0], subchaindirector[0], subchaindirector[1], 0);
-                        generalSx.Add(0.5 * (3 * Math.Pow(Math.Cos(tempAngleX), 2) - 1));
-                        tempAngleY = Analyzer.GetXYPlaneAngle(subchaindirector[0], 0, subchaindirector[1], subchaindirector[1]);
-                        generalSy.Add(0.5 * (3 * Math.Pow(Math.Cos(tempAngleY), 2) - 1));
 
-                        tempAngleX = 0.0;
-                        tempAngleY = 0.0;
+                        //test room
+                        double[] subChainStart = { c.XCoord, c.YCoord, c.ZCoord, c.AtomType };
+                        double[] subChainEnd = {chainEnd.XCoord, chainEnd.YCoord, chainEnd.ZCoord, chainEnd.AtomType };
+                        List<double[]> testSubChain = new List<double[]>();
+                        testSubChain.Add(subChainStart);
+                        testSubChain.Add(subChainEnd);
+                        var outChain = new List<MolData>();
+                        outChain = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]
+                                        , 0, 0, 0, testSubChain);
+
+                        FileWorker.SaveLammpstrj(false, @"F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\60\chains test\chain" + (counter + 1).ToString() + ".lammpstrj",
+                                                         1, sizes, 3, outChain);
+                        counter++;
+                        //test room end
+
+                        double CosXAngle = subchaindirector[0] / 
+                            Math.Sqrt(subchaindirector[0]*subchaindirector[0] + subchaindirector[1]*subchaindirector[1]);
+                        gelACosSx.Add(Math.Acos(CosXAngle));
+
+                        double CosYAngle = subchaindirector[1] /
+                            Math.Sqrt(subchaindirector[0] * subchaindirector[0] + subchaindirector[1] * subchaindirector[1]);
+                        gelACosSy.Add(Math.Acos(CosYAngle));
+
                     }
                 }
 
-                foreach (var c in generalSx)    //усредняем по гелю
-                {
-                    SmeanX += c;
-                }
-                SmeanX /= generalSx.Count;
-                gelSx.Add(SmeanX);
-                SmeanX = 0.0;
+                double sum = 0.0;
 
-                foreach (var c in generalSy)
+
+                foreach (var c in gelACosSx)    //усредняем по гелю углы
                 {
-                    SmeanY += c;
+                    ACosXmean += c;
                 }
-                SmeanY /= generalSy.Count;
-                gelSy.Add(SmeanY);
-                SmeanY = 0.0;
+
+                //test X
+                StreamWriter strX = new StreamWriter(@"F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\60\chains test\gelACosSx.txt");
+                for (int i = 0; i < gelACosSx.Count; i++)
+                {
+                    strX.WriteLine(gelACosSx[i]);
+                }
+                strX.Close();
+                //test X ended
+
+                ACosXmean = ACosXmean/gelACosSx.Count;
+                SCosX.Add(ACosXmean);
+
+                foreach (var c in gelACosSy)
+                {
+                    ACosYmean += c;
+                }
+
+                //test Y
+                StreamWriter strY = new StreamWriter(@"F:\SCIENCE\Diblocks\lammelae\snapshots sub6 lam monolayer\10 50k\60\chains test\gelACosSy.txt");
+                for (int i = 0; i < gelACosSy.Count; i++)
+                {
+                    strY.WriteLine(gelACosSy[i]);
+                }
+                strY.Close();
+                //test Y ended
+
+                ACosYmean = ACosYmean / gelACosSy.Count;
+                SCosY.Add(ACosYmean);
+
+                for (int k = 0; k < gelACosSx.Count; k++) //sqX - rad
+                {
+                    sum += Math.Pow((gelACosSx[k] - ACosXmean), 2);
+                }
+                sum = Math.Sqrt(sum / (gelACosSx.Count - 1));
+                devSCosX.Add(sum); 
+                sum = 0;
+                
+
+                for (int k = 0; k < gelACosSy.Count; k++) //sqX - rad
+                {
+                    sum += Math.Pow((gelACosSy[k] - ACosYmean), 2);
+                }
+                sum = Math.Sqrt(sum / (gelACosSy.Count - 1));
+                devSCosY.Add(sum); 
+                sum = 0;
+
+                gelACosSx.Clear();
+                gelACosSy.Clear();
+                ACosXmean = 0.0;
+                ACosYmean = 0.0;
+            //    devSCosX.Clear();
+            //    devSCosY.Clear();
+
             }
 
-            var SgeneralX = 0.0;                 //усредняем по ансамблю
-            foreach (var c in gelSx)
+            
+            var SgeneralX = 0.0;                 //усредняем по ансамблю сначала углы, а потом переводим в S
+            foreach (var c in SCosX)
             {
                 SgeneralX += c;
             }
-            SgeneralX /= gelSx.Count;
+            SgeneralX = SgeneralX / SCosX.Count;
+            SgeneralX = 0.5 * (3 * Math.Pow(Math.Cos(SgeneralX), 2) - 1);
 
             var SgeneralY = 0.0;                 
-            foreach (var c in gelSy)
+            foreach (var c in SCosY)
             {
                 SgeneralY += c;
             }
-            SgeneralY /= gelSy.Count;
+            SgeneralY = SgeneralY / SCosY.Count;
+            SgeneralY = 0.5 * (3 * Math.Pow(Math.Cos(SgeneralY), 2) - 1);
+
+            var devSgeneralX = 0.0;
+            foreach (var c in devSCosX)
+            {
+                devSgeneralX += c;
+            }
+            devSgeneralX = devSgeneralX / devSCosX.Count;
+            devSgeneralX = 0.5 * (3 * Math.Pow(Math.Cos(devSgeneralX), 2) - 1);
+
+            var devSgeneralY = 0.0;
+            foreach (var c in devSCosY)
+            {
+                devSgeneralY += c;
+            }
+            devSgeneralY = devSgeneralY / devSCosY.Count;
+            devSgeneralY = 0.5 * (3 * Math.Pow(Math.Cos(devSgeneralY), 2) - 1);
+
+            List<double> SxSy = new List<double>();
+            SxSy.Add(Math.Round(SgeneralX, 3));
+            SxSy.Add(Math.Round(SgeneralY, 3));
+            SxSy.Add(Math.Round(devSgeneralX, 3));
+            SxSy.Add(Math.Round(devSgeneralY, 3));
 
 
-            return Math.Round(SgeneralX, 3);               //must fix it later
+            return SxSy;              
 
 
         }
@@ -572,7 +693,7 @@ namespace GelAnalyzer
             {
                 foreach (var c in bead.Bonds)
                 {
-                    if (c != crosslinkerId && c!= previousBead)
+                    if (c != crosslinkerId && c != previousBead)
                     {
                         if (!mGel[c - 1].AtomType.Equals(mGel[crosslinkerId - 1].AtomType))
                         {
@@ -584,12 +705,79 @@ namespace GelAnalyzer
                         }
 
                     }
-                    
+
                 }
                 return bead;
             }
+
+        }
+
+        private static MolData getChainEndWithBoundaries(int crosslinkerId, int currentBead, int previousBead, 
+            List<MolData> mGel, List<double[]> boundaries)
+        {
             
-        } 
+            var beads = mGel.Where(x => x.Index == currentBead).ToList();
+            if (beads.Count != 0)
+            {
+                var bead = beads[0];
+                var bonds = bead.Bonds;
+
+
+            
+            {
+                foreach (var c in bead.Bonds)
+                {
+                    if (c != crosslinkerId && c != previousBead)
+                    {
+                        var newbead = mGel.Where(x => x.Index == c).ToList();
+                            if (newbead.Count == 0)
+                            {
+                                continue;
+                            }
+                            else try
+                                {
+                                    if (!newbead[0].AtomType.Equals(mGel[crosslinkerId - 1].AtomType))
+
+                                    {
+                                        return bead;
+                                    }
+                                    else
+                                    //if (!mGel[c - 1].AtomType.Equals(mGel[crosslinkerId - 1].AtomType))
+                                    //{
+                                    //    return bead;
+                                    //}
+                                    //else
+                                    {
+                                        if (bead.ZCoord >= boundaries[2][0] && bead.ZCoord <= boundaries[2][1])
+                                        {
+                                            beadInSubchainCounter++;
+                                            return getChainEndWithBoundaries(crosslinkerId, c, currentBead, mGel, boundaries);
+                                        }
+                                        else
+                                        {
+                                            return bead;
+                                        }
+                                        // return getChainEnd(crosslinkerId, c, currentBead, mGel);
+                                    }
+
+                                }
+                                catch (Exception e)
+                                {
+                                    continue;
+                                }
+
+                                }
+
+                }
+                return bead;
+            }
+            }
+            else
+            {
+                return new MolData(100, 0, 0.0, 0.0, 0.0);
+            }
+        }
+
 
 
         private static void crossLinkerWalk(MolData currBead, int colorLength, int subchainLength, 
@@ -686,6 +874,220 @@ namespace GelAnalyzer
                     continue;
                 }
                 }
+        }
+
+        private static double[] FindInsidePoint(List<double[]> points)
+        {
+            // Находим центр масс множества
+            double centerX = 0;
+            double centerY = 0;
+            double centerZ = 0;
+            foreach (double[] point in points)
+            {
+                centerX += point[0];
+                centerY += point[1];
+                centerZ += point[2];
+            }
+            centerX /= points.Count;
+            centerY /= points.Count;
+            centerZ /= points.Count;
+            // Создаем луч, исходящий из центра масс в любом направлении
+            double x1 = centerX;
+            double y1 = centerY;
+            double z1 = centerZ;
+            double x2 = centerX + 100000;
+            double y2 = centerY + 100000;
+            double z2 = centerZ + 100000;
+            // Находим первую точку пересечения луча с границей множества
+            foreach (double[] point in points)
+            {
+                double x3 = point[0];
+                double y3 = point[1];
+                double z3 = point[2];
+                double[] nextPoint = GetNextBoundaryPoint(points, point);
+                double x4 = nextPoint[0];
+                double y4 = nextPoint[1];
+                double z4 = nextPoint[2];
+                double[] intersection = GetIntersection(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+                if (intersection != null)
+                {
+                    return intersection;
+                }
+            }
+            return null;
+        }
+
+        private static double[] FindNearestBoundaryPoint(List<double[]> points, double[] insidePoint)
+        {
+            // Находим ближайшую точку на границе множества
+            double minDistance = double.MaxValue;
+            double[] nearestPoint = null;
+            foreach (double[] point in points)
+            {
+                double distance = GetDistance(point, insidePoint);
+                if (distance < minDistance)
+                {
+                    double[] nextPoint = GetNextBoundaryPoint(points, point);
+                    if (IsIntersecting(point, nextPoint, insidePoint[0], insidePoint[1], insidePoint[2]))
+                    {
+                        minDistance = distance;
+                        nearestPoint = point;
+                    }
+                }
+            }
+            return nearestPoint;
+        }
+
+        private static double[] GetIntersection(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4)
+        {
+            // Находим точку пересечения луча, исходящего из точки (x1, y1, z1), соединяющего точки (x1, y1, z1) и (x2, y2, z2),
+            // с отрезком, соединяющим точки (x3, y3, z3) и (x4, y4, z4)
+            double[] intersection = null;
+            double x = double.NaN;
+            double y = double.NaN;
+            double z = double.NaN;
+            double t = double.NaN;
+            double a1 = y2 - y1;
+            double b1 = x1 - x2;
+            double c1 = -z2 + z1;
+            double d1 = -y1 * x2 + y2 * x1;
+            double a2 = y4 - y3;
+            double b2 = x3 - x4;
+            double c2 = -z4 + z3;
+            double d2 = -y3 * x4 + y4 * x3;
+            double det = a1 * b2 - a2 * b1;
+            if (det != 0)
+            {
+                x = (b1 * d2 - b2 * d1) / det;
+                y = (a2 * d1 - a1 * d2) / det;
+                z = (c1 * b2 - c2 * b1) / det;
+                t = Math.Sqrt(Math.Pow(x - x1, 2) + Math.Pow(y - y1, 2) + Math.Pow(z - z1, 2));
+                if (t < 100000)
+                {
+                    intersection = new double[] { x, y, z };
+                }
+            }
+            return intersection;
+        }
+
+        private static double GetDistance(double[] p1, double[] p2)
+        {
+            // Находим расстояние между двумя точками
+            double dx = p1[0] - p2[0];
+            double dy = p1[1] - p2[1];
+            double dz = p1[2] - p2[2];
+            return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        private static bool IsIntersecting(double[] p1, double[] p2, double x, double y, double z)
+        {
+            // Проверяем, пересекает ли луч, исходящий из точки (x, y, z), отрезок, соединяющий точки p1 и p2
+            double x1 = p1[0];
+            double y1 = p1[1];
+            double z1 = p1[2];
+            double x2 = p2[0];
+            double y2 = p2[1];
+            double z2 = p2[2];
+            if (((y1 > y) != (y2 > y)) && (x < (x2 - x1) * (y - y1) / (y2 - y1) + x1) && (z < (z2 - z1) * (y - y1) / (y2 - y1) + z1))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static double[] GetNextBoundaryPoint(List<double[]> points, double[] currentPoint)
+        {
+            // Находим следующую точку на границе множества
+            int currentIndex = points.IndexOf(currentPoint);
+            int nextIndex = (currentIndex + 1) % points.Count;
+            return points[nextIndex];
+        }
+
+        
+
+        public static Boolean isBeadInside(List<double[]> points, double x, double y, double z)
+        {
+            // Находим точку внутри множества
+            double[] insidePoint = FindInsidePoint(points);
+            if (insidePoint == null)
+            {
+                return false;
+            }
+            // Находим ближайшую точку на границе множества
+            double[] boundaryPoint = FindNearestBoundaryPoint(points, insidePoint);
+            if (boundaryPoint == null)
+            {
+                return false;
+            }
+            // Обходим границу множества и проверяем, находится ли наша точка внутри многоугольника
+            bool inside = false;
+            double[] currentPoint = boundaryPoint;
+            do
+            {
+                double[] nextPoint = GetNextBoundaryPoint(points, currentPoint);
+                if (IsIntersecting(currentPoint, nextPoint, x, y, z))
+                {
+                    inside = !inside;
+                }
+                currentPoint = nextPoint;
+            } while (!currentPoint.SequenceEqual(boundaryPoint));
+            return inside;
+        }
+
+        public static bool checkDistance(double[] liquidParticle, SynchronizedCollection<double[]> microgelParticles, double maxDistance, double[] gelCenterPoint)
+        {
+            bool result = false;
+            double distanceToNearestPolymerBead = Analyzer.GetDistance(liquidParticle, gelCenterPoint);
+
+            if(distanceToNearestPolymerBead > maxDistance)
+            {
+                return false;
+            } else
+            {
+                for (int index = 0; index < microgelParticles.Count; index++)
+                {
+                    distanceToNearestPolymerBead = Analyzer.GetDistance(microgelParticles[index], liquidParticle);
+                    if (distanceToNearestPolymerBead <= 2)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+
+
+        public static Boolean checkAtLeastOneIsHigher(double[] liquidParticle, List<double[]> microParticles)
+        {
+            double[] testParticle = microParticles.Find(x => x[0] > liquidParticle[0] && 
+                                                        x[1] > liquidParticle[1] && 
+                                                        x[2] > liquidParticle[2]);
+
+            if(testParticle == null)
+            {
+                return false;
+            } else
+            {
+                return true;
+            }
+        }
+
+        public static Boolean checkAtLeastOneIsLower(double[] liquidParticle, List<double[]> microParticles)
+        {
+            double[] testParticle = microParticles.Find(x => x[0] < liquidParticle[0] &&
+                                                       x[1] < liquidParticle[1] &&
+                                                       x[2] < liquidParticle[2]);
+
+            if (testParticle == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         public static List<MolData> GetCrossLinkers(List<MolData> mgel)
