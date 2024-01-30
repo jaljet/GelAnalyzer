@@ -683,10 +683,12 @@ namespace GelAnalyzer
                         {
                             double[] liqData = file[y];
                       
-                            if(liqData[3] != 1 && liqData[3] != 1.01 &&
+                            if(liqData[3] != 1 && liqData[3] != 1.01 && liqData[3] != 1.03 // берем только тип 4, 
+                                                                                           // потому что тип 3 это масло, которое можно оставить всё
+                                /*&&
                                                                     (liqData[0] > 13 && liqData[0] < 67) &&
                                                                     (liqData[1] > 10 && liqData[1] < 74) &&
-                                                                    (liqData[2] > 9 && liqData[2] < 67)
+                                                                    (liqData[2] > 9 && liqData[2] < 67)*/
                                 )
                             {
                                 allLiquidParticles.Add(liqData);
@@ -805,6 +807,21 @@ namespace GelAnalyzer
                         var resultParticles = new List<double[]>();
                         resultParticles.AddRange(microgelParticles);
                         resultParticles.AddRange(microgelLiquidParticles);
+
+                        for (int y = 0; y < file.Count; y++)
+                        {
+                            double[] liqData = file[y];
+
+                            if (liqData[3] == 1.03 // добавляем масло
+                                /*&&
+                                                                    (liqData[0] > 13 && liqData[0] < 67) &&
+                                                                    (liqData[1] > 10 && liqData[1] < 74) &&
+                                                                    (liqData[2] > 9 && liqData[2] < 67)*/
+                                )
+                            {
+                                resultParticles.Add(liqData);
+                            }
+                        }
 
                         var liquidInsideMol = new List<MolData>();
                         liquidInsideMol = MolData.ShiftAll(false, 3, (int)sizes[0], (int)sizes[1], (int)sizes[2]

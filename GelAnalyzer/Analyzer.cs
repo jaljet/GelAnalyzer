@@ -1047,7 +1047,7 @@ namespace GelAnalyzer
                 for (int index = 0; index < microgelParticles.Count; index++)
                 {
                     distanceToNearestPolymerBead = Analyzer.GetDistance(microgelParticles[index], liquidParticle);
-                    if (distanceToNearestPolymerBead <= 2)
+                    if (distanceToNearestPolymerBead <= 1.7)
                     {
                         return true;
                     }
