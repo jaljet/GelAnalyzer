@@ -666,17 +666,10 @@ namespace GelAnalyzer
                         #region вырезание микрогеля с жидкостями
                         // есть sizes - в нем размеры ящика
                         // есть file - в нем все частицы снэпшота; это массив из 5 чисел: x-y-z + тип частицы + связь
-                        // мы должны пройтись от стенок вдоль каждого направления (x-y-z) и при обнаружении молекулы типа 1 запомнить её координаты
-                        // а лучше так: берём "канал" частиц толщиной 2 до середины ящика при фиксированном x-y
-                        // строится следующим образом (должно быть 3 варианта): фиксированное X, фиксированное Y, рост Z до sizes/2
-                        // затем X и Y увеличиваем на 1
-                        // на каждом шаге мы смотрим тип частицы, и если он ЯВЛЯЕТСЯ тип 1, то добавляем его и обрываем цикл
 
-                        // сначала ходим по X, здесь фиксированное Y и Z, а X будет расти до значения в половину ящика
-                        // сначала растет параллельно Y, потом Z
+                        // частицы полимера
                         List<double[]> microgelParticles = new List<double[]>();
                         microgelParticles.AddRange(file.Where(x => x[3] == 1 || x[3] == 1.01));
-
 
                         SynchronizedCollection<double[]> allLiquidParticles = new SynchronizedCollection<double[]>();
                         for (int y = 0; y< file.Count; y++)
@@ -684,32 +677,27 @@ namespace GelAnalyzer
                             double[] liqData = file[y];
                       
                             if(liqData[3] != 1 && liqData[3] != 1.01 && liqData[3] != 1.03 // берем только тип 4, 
-                                                                                           // потому что тип 3 это масло, которое можно оставить всё
-                                /*&&
-                                                                    (liqData[0] > 13 && liqData[0] < 67) &&
-                                                                    (liqData[1] > 10 && liqData[1] < 74) &&
-                                                                    (liqData[2] > 9 && liqData[2] < 67)*/
+                                                                                           // потому что тип 3 это масло, которое можно оставить целиком
+                                                                                           // (вообще овито это рисует обычно в виде воды, но в данной задаче вот так))
                                 )
                             {
                                 allLiquidParticles.Add(liqData);
                             }
                         }
 
+                        //сюда будем писать частицы жидкости, которые надо оставить
                         SynchronizedCollection<double[]> microgelLiquidParticles = new SynchronizedCollection<double[]>();
 
-                        // хотя бы одна частица полимера с координатой по x/y/z БОЛЬШЕЙ чем координаты бида жидкости
-                        // и хотя бы одна частица полимера с координатой по x/y/z МЕНЬШЕЙ чем координаты бида жидкости
+                        int chunkSize = allLiquidParticles.Count / 8; // вычисляем размер чанка - это нужно для разбиения общего списка бидов жидкости под parallel
 
-                        int chunkSize = allLiquidParticles.Count / 8; // вычисляем размер чанка
-
+                        // GelStruct умеет одну важную вещь: вычислять максимальное расстояние от какого-нибудь бида геля до центра 
+                        // это удобно использовать, чтобы выкинуть подавляющую часть бидов жидкости вокруг МГ 
                         GelStruct gel = new GelStruct(new List<double[]>(microgelParticles));
                         double maxDistance = gel.maxDistanceToCenter;
                         double[] gelCenterPoint = gel.centerMassPoint;
 
                         Parallel.For(0, 8, count =>
                         {
-
-                        //    GelStruct gelStruct = new GelStruct(microgelParticles);
                             int start = count * chunkSize;
                             int end = (count == 7) ? allLiquidParticles.Count : (count + 1) * chunkSize; // последний чанк может быть меньшего размера
 
@@ -722,7 +710,7 @@ namespace GelAnalyzer
                                 }
                             }
 
-                            //  || file[j][3] == 1.01
+                            //  || file[j][3] == 1.01 -- если захотим что-то другое, но надо не забыть и выше переставить добавление в allLiquidParticles 
 
                             for (int liquidCounter = start; liquidCounter < end; liquidCounter++)
                             {
@@ -731,17 +719,13 @@ namespace GelAnalyzer
                                 {
                                     microgelLiquidParticles.Add(allLiquidParticles[liquidCounter]);
                                 }
-
-                                /*
-                                if (Analyzer.checkAtLeastOneIsHigher(allLiquidParticles[liquidCounter], microgelParticles) &&
-                                    Analyzer.checkAtLeastOneIsLower(allLiquidParticles[liquidCounter], microgelParticles))
-                                {
-                                    microgelLiquidParticles.Add(allLiquidParticles[liquidCounter]);
-                                }*/
                             }
 
                         });
                                               
+
+                        // прежний алгоритм для решения той же задачи, но через полигоны и попытку описать поверхность МГ через полигоны
+                        // не сработал из-за большого размера частицы и сложной формы поверхности, но в целом применим, если форма частицы будет проще
 
                            /*     
                         SynchronizedCollection<Point> vertices = new SynchronizedCollection<Point>();
@@ -791,7 +775,6 @@ namespace GelAnalyzer
 
                         });
 
-
                       //  for (int liquidCounter = 0; liquidCounter < allLiquidParticles.Count; liquidCounter++)
                       //  {
                       //      Point point = new Point(allLiquidParticles[liquidCounter][0],
@@ -813,10 +796,6 @@ namespace GelAnalyzer
                             double[] liqData = file[y];
 
                             if (liqData[3] == 1.03 // добавляем масло
-                                /*&&
-                                                                    (liqData[0] > 13 && liqData[0] < 67) &&
-                                                                    (liqData[1] > 10 && liqData[1] < 74) &&
-                                                                    (liqData[2] > 9 && liqData[2] < 67)*/
                                 )
                             {
                                 resultParticles.Add(liqData);
@@ -830,9 +809,7 @@ namespace GelAnalyzer
                         FileWorker.SaveLammpstrj(false, tbPath.Text + "//result" + (i + 1).ToString() + ".lammpstrj",
                                                  1, sizes, 3, liquidInsideMol);
 
-
                         #endregion
-
 
                     }
 
